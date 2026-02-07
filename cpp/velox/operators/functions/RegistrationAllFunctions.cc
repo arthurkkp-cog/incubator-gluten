@@ -17,6 +17,7 @@
 #include "operators/functions/RegistrationAllFunctions.h"
 
 #include "operators/functions/Arithmetic.h"
+#include "operators/functions/SchemaOfCsv.h"
 #include "operators/functions/RowConstructorWithNull.h"
 #include "operators/functions/RowFunctionWithNull.h"
 #include "velox/expression/SpecialFormRegistry.h"
@@ -77,6 +78,10 @@ void registerFunctionOverwrite() {
       std::make_unique<RowConstructorWithNullCallToSpecialForm>(kRowConstructorWithAllNull));
 
   velox::functions::registerPrestoVectorFunctions();
+
+  // Register schema_of_csv function
+  velox::registerFunction<SchemaOfCsvFunction, velox::Varchar, velox::Varchar>({"schema_of_csv"});
+  velox::registerFunction<SchemaOfCsvFunction, velox::Varchar, velox::Varchar, velox::Varchar>({"schema_of_csv"});
 }
 
 } // namespace
