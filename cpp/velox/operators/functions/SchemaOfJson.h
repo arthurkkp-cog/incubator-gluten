@@ -106,12 +106,10 @@ struct SchemaOfJsonFunction {
 
         // Get the first element to infer the element type.
         std::string elementSchema = "STRING";
-        bool hasElement = false;
         for (auto element : arr) {
           if (element.error()) {
             return false;
           }
-          hasElement = true;
           if (!inferSchema(element.value(), elementSchema)) {
             return false;
           }
