@@ -111,3 +111,26 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, makeInterval) {
+  auto rowType = ROW({INTEGER(), INTEGER(), INTEGER(), INTEGER(), INTEGER(), INTEGER(), DOUBLE()});
+  auto result = evaluate(
+      "make_interval(c0, c1, c2, c3, c4, c5, c6)",
+      makeRowVector({
+          makeFlatVector<int32_t>({1, 0, 2}),
+          makeFlatVector<int32_t>({2, 0, 6}),
+          makeFlatVector<int32_t>({1, 0, 0}),
+          makeFlatVector<int32_t>({3, 0, 10}),
+          makeFlatVector<int32_t>({4, 0, 1}),
+          makeFlatVector<int32_t>({30, 0, 30}),
+          makeFlatVector<double>({15.5, 0.0, 45.123456}),
+      }));
+
+  auto expected = makeRowVector({
+      makeFlatVector<int32_t>({14, 0, 30}),
+      makeFlatVector<int32_t>({10, 0, 10}),
+      makeFlatVector<int64_t>({16215500000LL, 0LL, 5445123456LL}),
+  });
+
+  assertEqualVectors(expected, result);
+}

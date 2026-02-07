@@ -17,6 +17,7 @@
 #include "operators/functions/RegistrationAllFunctions.h"
 
 #include "operators/functions/Arithmetic.h"
+#include "operators/functions/DatetimeFunctions.h"
 #include "operators/functions/RowConstructorWithNull.h"
 #include "operators/functions/RowFunctionWithNull.h"
 #include "velox/expression/SpecialFormRegistry.h"
@@ -77,6 +78,17 @@ void registerFunctionOverwrite() {
       std::make_unique<RowConstructorWithNullCallToSpecialForm>(kRowConstructorWithAllNull));
 
   velox::functions::registerPrestoVectorFunctions();
+
+  velox::registerFunction<
+      MakeIntervalFunction,
+      Row<int32_t, int32_t, int64_t>,
+      int32_t,
+      int32_t,
+      int32_t,
+      int32_t,
+      int32_t,
+      int32_t,
+      double>({"make_interval"});
 }
 
 } // namespace
