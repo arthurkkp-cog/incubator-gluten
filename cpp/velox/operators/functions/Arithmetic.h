@@ -63,4 +63,17 @@ struct RoundFunction {
     result = round(a, b);
   }
 };
+
+template <typename T>
+struct NormalizeNaNAndZeroFunction {
+  FOLLY_ALWAYS_INLINE void call(T& result, const T& input) {
+    if (std::isnan(input)) {
+      result = std::numeric_limits<T>::quiet_NaN();
+    } else if (input == static_cast<T>(0)) {
+      result = static_cast<T>(0);
+    } else {
+      result = input;
+    }
+  }
+};
 } // namespace gluten

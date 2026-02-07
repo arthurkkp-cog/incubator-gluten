@@ -57,6 +57,9 @@ void registerFunctionOverwrite() {
   velox::registerFunction<RoundFunction, double, double, int32_t>({"round"});
   velox::registerFunction<RoundFunction, float, float, int32_t>({"round"});
 
+  velox::registerFunction<NormalizeNaNAndZeroFunction<double>, double, double>({"normalize_nanand_zero"});
+  velox::registerFunction<NormalizeNaNAndZeroFunction<float>, float, float>({"normalize_nanand_zero"});
+
   auto kRowConstructorWithNull = RowConstructorWithNullCallToSpecialForm::kRowConstructorWithNull;
   velox::exec::registerVectorFunction(
       kRowConstructorWithNull,

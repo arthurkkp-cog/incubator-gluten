@@ -111,3 +111,47 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, normalizeNaNAndZero) {
+  auto testNormalizeDouble = [&](double input, double expected) {
+    auto result = evaluate<SimpleVector<double>>(
+        "normalize_nanand_zero(c0)", makeRowVector({makeFlatVector<double>({input})}));
+    if (std::isnan(expected)) {
+      ASSERT_TRUE(std::isnan(result->valueAt(0)));
+    } else {
+      ASSERT_EQ(result->valueAt(0), expected);
+      if (expected == 0.0) {
+        ASSERT_FALSE(std::signbit(result->valueAt(0)));
+      }
+    }
+  };
+
+  auto testNormalizeFloat = [&](float input, float expected) {
+    auto result = evaluate<SimpleVector<float>>(
+        "normalize_nanand_zero(c0)", makeRowVector({makeFlatVector<float>({input})}));
+    if (std::isnan(expected)) {
+      ASSERT_TRUE(std::isnan(result->valueAt(0)));
+    } else {
+      ASSERT_EQ(result->valueAt(0), expected);
+      if (expected == 0.0f) {
+        ASSERT_FALSE(std::signbit(result->valueAt(0)));
+      }
+    }
+  };
+
+  testNormalizeDouble(std::nan(""), std::nan(""));
+  testNormalizeDouble(-0.0, 0.0);
+  testNormalizeDouble(0.0, 0.0);
+  testNormalizeDouble(1.5, 1.5);
+  testNormalizeDouble(-1.5, -1.5);
+  testNormalizeDouble(std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
+  testNormalizeDouble(-std::numeric_limits<double>::infinity(), -std::numeric_limits<double>::infinity());
+
+  testNormalizeFloat(std::nanf(""), std::nanf(""));
+  testNormalizeFloat(-0.0f, 0.0f);
+  testNormalizeFloat(0.0f, 0.0f);
+  testNormalizeFloat(1.5f, 1.5f);
+  testNormalizeFloat(-1.5f, -1.5f);
+  testNormalizeFloat(std::numeric_limits<float>::infinity(), std::numeric_limits<float>::infinity());
+  testNormalizeFloat(-std::numeric_limits<float>::infinity(), -std::numeric_limits<float>::infinity());
+}
