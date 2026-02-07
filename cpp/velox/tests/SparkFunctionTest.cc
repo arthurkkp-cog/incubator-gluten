@@ -111,3 +111,19 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, radians) {
+  auto result = evaluate<SimpleVector<double>>("radians(c0)", makeRowVector({makeFlatVector<double>({0.0, 90.0, 180.0, 270.0, 360.0})}));
+  constexpr double kPi = M_PI;
+  ASSERT_NEAR(result->valueAt(0), 0.0, 1e-10);
+  ASSERT_NEAR(result->valueAt(1), kPi / 2, 1e-10);
+  ASSERT_NEAR(result->valueAt(2), kPi, 1e-10);
+  ASSERT_NEAR(result->valueAt(3), 3 * kPi / 2, 1e-10);
+  ASSERT_NEAR(result->valueAt(4), 2 * kPi, 1e-10);
+
+  auto resultFloat = evaluate<SimpleVector<float>>("radians(c0)", makeRowVector({makeFlatVector<float>({0.0f, 90.0f, 180.0f})}));
+  constexpr float kPiF = static_cast<float>(M_PI);
+  ASSERT_NEAR(resultFloat->valueAt(0), 0.0f, 1e-6f);
+  ASSERT_NEAR(resultFloat->valueAt(1), kPiF / 2, 1e-6f);
+  ASSERT_NEAR(resultFloat->valueAt(2), kPiF, 1e-6f);
+}

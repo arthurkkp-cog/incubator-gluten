@@ -57,7 +57,10 @@ void registerFunctionOverwrite() {
   velox::registerFunction<RoundFunction, double, double, int32_t>({"round"});
   velox::registerFunction<RoundFunction, float, float, int32_t>({"round"});
 
-  auto kRowConstructorWithNull = RowConstructorWithNullCallToSpecialForm::kRowConstructorWithNull;
+  velox::registerFunction<RadiansFunction<double>, double, double>({"radians"});
+  velox::registerFunction<RadiansFunction<float>, float, float>({"radians"});
+
+  auto kRowConstructorWithNull= RowConstructorWithNullCallToSpecialForm::kRowConstructorWithNull;
   velox::exec::registerVectorFunction(
       kRowConstructorWithNull,
       std::vector<std::shared_ptr<velox::exec::FunctionSignature>>{},
