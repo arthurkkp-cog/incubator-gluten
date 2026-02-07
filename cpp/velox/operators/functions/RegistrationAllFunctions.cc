@@ -19,6 +19,7 @@
 #include "operators/functions/Arithmetic.h"
 #include "operators/functions/RowConstructorWithNull.h"
 #include "operators/functions/RowFunctionWithNull.h"
+#include "operators/functions/SparkStringFunctions.h"
 #include "velox/expression/SpecialFormRegistry.h"
 #include "velox/expression/VectorFunction.h"
 #include "velox/functions/iceberg/Register.h"
@@ -77,6 +78,9 @@ void registerFunctionOverwrite() {
       std::make_unique<RowConstructorWithNullCallToSpecialForm>(kRowConstructorWithAllNull));
 
   velox::functions::registerPrestoVectorFunctions();
+
+  // Register 2-argument version of locate function
+  velox::registerFunction<LocateFunctionTwoArgs, int32_t, velox::Varchar, velox::Varchar>({"locate"});
 }
 
 } // namespace
