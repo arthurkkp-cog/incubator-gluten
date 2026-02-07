@@ -128,6 +128,41 @@ abstract class DateFunctionsValidateSuite extends FunctionsValidateSuite {
     }
   }
 
+  test("date_part with various fields") {
+    withTempPath {
+      path =>
+        Seq(
+          Timestamp.valueOf("2024-08-22 10:30:45.123456"),
+          Timestamp.valueOf("2022-01-15 23:59:59.999999")
+        )
+          .toDF("ts")
+          .write
+          .parquet(path.getCanonicalPath)
+
+        spark.read.parquet(path.getCanonicalPath).createOrReplaceTempView("t")
+
+        runQueryAndCompare("""SELECT
+                             |  date_part('year', ts),
+                             |  date_part('month', ts),
+                             |  date_part('day', ts),
+                             |  date_part('hour', ts),
+                             |  date_part('minute', ts),
+                             |  date_part('second', ts)
+                             |FROM t""".stripMargin) {
+          checkGlutenPlan[ProjectExecTransformer]
+        }
+
+        runQueryAndCompare("""SELECT
+                             |  date_part('quarter', ts),
+                             |  date_part('week', ts),
+                             |  date_part('dayofweek', ts),
+                             |  date_part('dayofyear', ts)
+                             |FROM t""".stripMargin) {
+          checkGlutenPlan[ProjectExecTransformer]
+        }
+    }
+  }
+
   test("date_trunc") {
     withTempPath {
       path =>

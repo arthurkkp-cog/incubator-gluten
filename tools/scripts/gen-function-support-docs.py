@@ -517,6 +517,14 @@ STATIC_INVOKES = {
     "rpad": ("org.apache.spark.unsafe.array.ByteArrayMethods", "rpad"),
 }
 
+# Expression builder aliases that map to supported expressions.
+# These are functions that use ExpressionBuilder to create a supported expression.
+# Format: function_name -> underlying_expression_class_name
+EXPRESSION_BUILDER_ALIASES = {
+    "date_part": "Extract",
+    "datepart": "Extract",
+}
+
 # Known Restrictions in Gluten.
 LOOKAROUND_UNSUPPORTED = "Lookaround unsupported"
 BINARY_TYPE_UNSUPPORTED = "BinaryType unsupported"
@@ -843,6 +851,11 @@ def parse_logs(log_file):
     for category in FUNCTION_CATEGORIES:
         if category == "scalar":
             for f in functions[category]:
+                # Skip if function is an expression builder alias for a supported expression
+                if f in EXPRESSION_BUILDER_ALIASES:
+                    underlying_expr = EXPRESSION_BUILDER_ALIASES[f]
+                    if underlying_expr in gluten_expressions.keys():
+                        continue
                 # TODO: Remove this filter as it may exclude supported expressions, such as Builder.
                 if (
                     f not in builtin_functions
