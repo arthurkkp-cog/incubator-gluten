@@ -55,6 +55,7 @@ object ExpressionNames {
   final val REGR_INTERCEPT = "regr_intercept"
   final val REGR_SXY = "regr_sxy"
   final val REGR_REPLACEMENT = "regr_replacement"
+  final val COUNT_MIN_SKETCH = "count_min_sketch"
 
   // Function names used by Substrait plan.
   final val ADD = "add"
