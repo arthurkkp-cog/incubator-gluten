@@ -111,3 +111,43 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+// Test extract function for date/timestamp fields
+// The extract function extracts a part of the date/timestamp
+TEST_F(SparkFunctionTest, extractYear) {
+  // Test year extraction from date
+  auto dateInput = makeFlatVector<int32_t>({18628, 18993, 0, -365}); // 2021-01-01, 2022-01-01, 1970-01-01, 1969-01-01
+  auto result = evaluate<SimpleVector<int32_t>>("year(c0)", makeRowVector({dateInput}));
+  ASSERT_EQ(result->valueAt(0), 2021);
+  ASSERT_EQ(result->valueAt(1), 2022);
+  ASSERT_EQ(result->valueAt(2), 1970);
+  ASSERT_EQ(result->valueAt(3), 1969);
+}
+
+TEST_F(SparkFunctionTest, extractMonth) {
+  // Test month extraction from date
+  auto dateInput = makeFlatVector<int32_t>({18628, 18659, 18687}); // 2021-01-01, 2021-02-01, 2021-03-01
+  auto result = evaluate<SimpleVector<int32_t>>("month(c0)", makeRowVector({dateInput}));
+  ASSERT_EQ(result->valueAt(0), 1);
+  ASSERT_EQ(result->valueAt(1), 2);
+  ASSERT_EQ(result->valueAt(2), 3);
+}
+
+TEST_F(SparkFunctionTest, extractDay) {
+  // Test day extraction from date
+  auto dateInput = makeFlatVector<int32_t>({18628, 18629, 18658}); // 2021-01-01, 2021-01-02, 2021-01-31
+  auto result = evaluate<SimpleVector<int32_t>>("day(c0)", makeRowVector({dateInput}));
+  ASSERT_EQ(result->valueAt(0), 1);
+  ASSERT_EQ(result->valueAt(1), 2);
+  ASSERT_EQ(result->valueAt(2), 31);
+}
+
+TEST_F(SparkFunctionTest, extractQuarter) {
+  // Test quarter extraction from date
+  auto dateInput = makeFlatVector<int32_t>({18628, 18718, 18809, 18901}); // Q1, Q2, Q3, Q4 of 2021
+  auto result = evaluate<SimpleVector<int32_t>>("quarter(c0)", makeRowVector({dateInput}));
+  ASSERT_EQ(result->valueAt(0), 1);
+  ASSERT_EQ(result->valueAt(1), 2);
+  ASSERT_EQ(result->valueAt(2), 3);
+  ASSERT_EQ(result->valueAt(3), 4);
+}
