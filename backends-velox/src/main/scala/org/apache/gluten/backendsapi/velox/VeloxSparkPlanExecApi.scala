@@ -852,6 +852,27 @@ class VeloxSparkPlanExecApi extends SparkPlanExecApi {
     ToJsonTransformer(substraitExprName, child, expr)
   }
 
+  /** Generate an expression transformer to transform StructsToCsv to Substrait. */
+  override def genToCsvTransformer(
+      substraitExprName: String,
+      child: ExpressionTransformer,
+      expr: StructsToCsv): ExpressionTransformer = {
+    if (!expr.options.isEmpty) {
+      GlutenExceptionUtil.throwsNotFullySupported(
+        ExpressionNames.TO_CSV,
+        ToCsvRestrictions.NOT_SUPPORT_WITH_OPTIONS)
+    }
+    if (
+      !SQLConf.get.caseSensitiveAnalysis &&
+      ExpressionUtils.hasUppercaseStructFieldName(child.dataType)
+    ) {
+      GlutenExceptionUtil.throwsNotFullySupported(
+        ExpressionNames.TO_CSV,
+        ToCsvRestrictions.NOT_SUPPORT_UPPERCASE_STRUCT)
+    }
+    ToCsvTransformer(substraitExprName, child, expr)
+  }
+
   override def genUnbase64Transformer(
       substraitExprName: String,
       child: ExpressionTransformer,

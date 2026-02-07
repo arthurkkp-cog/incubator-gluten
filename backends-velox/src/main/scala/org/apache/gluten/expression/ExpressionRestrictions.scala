@@ -74,6 +74,20 @@ object ToJsonRestrictions extends ExpressionRestrictions {
     Array(NOT_SUPPORT_WITH_OPTIONS, NOT_SUPPORT_UPPERCASE_STRUCT)
 }
 
+object ToCsvRestrictions extends ExpressionRestrictions {
+  val NOT_SUPPORT_WITH_OPTIONS: String =
+    s"${ExpressionNames.TO_CSV} with options is not supported in Velox"
+
+  val NOT_SUPPORT_UPPERCASE_STRUCT: String =
+    s"When 'spark.sql.caseSensitive = false', ${ExpressionNames.TO_CSV} produces unexpected" +
+      s" result for struct field with uppercase name"
+
+  override val functionName: String = ExpressionNames.TO_CSV
+
+  override val restrictionMessages: Array[String] =
+    Array(NOT_SUPPORT_WITH_OPTIONS, NOT_SUPPORT_UPPERCASE_STRUCT)
+}
+
 object Unbase64Restrictions extends ExpressionRestrictions {
   val NOT_SUPPORT_FAIL_ON_ERROR: String =
     s"${ExpressionNames.UNBASE64} with failOnError is not supported"
@@ -108,6 +122,7 @@ object ExpressionRestrictions {
       StrToMapRestrictions,
       FromJsonRestrictions,
       ToJsonRestrictions,
+      ToCsvRestrictions,
       Unbase64Restrictions,
       Base64Restrictions
     )

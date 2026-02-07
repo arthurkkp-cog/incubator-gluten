@@ -247,6 +247,9 @@ object ExpressionNames {
   final val JSON_TUPLE = "json_tuple"
   final val JSON_OBJECT_KEYS = "json_object_keys"
 
+  // CSV functions
+  final val TO_CSV = "to_csv"
+
   // Hash functions
   final val MURMUR3HASH = "murmur3hash"
   final val XXHASH64 = "xxhash64"
