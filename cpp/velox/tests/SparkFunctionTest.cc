@@ -111,3 +111,55 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, widthBucket) {
+  auto widthBucket = [&](double value, double minValue, double maxValue, int64_t numBucket) {
+    return evaluateOnce<int64_t>(
+        "width_bucket(c0, c1, c2, c3)",
+        makeRowVector({
+            makeConstant<double>(value, 1),
+            makeConstant<double>(minValue, 1),
+            makeConstant<double>(maxValue, 1),
+            makeConstant<int64_t>(numBucket, 1),
+        }));
+  };
+
+  // Basic cases from Spark documentation
+  ASSERT_EQ(widthBucket(5.3, 0.2, 10.6, 5), 3);
+  ASSERT_EQ(widthBucket(-2.1, 1.3, 3.4, 3), 0);
+  ASSERT_EQ(widthBucket(8.1, 0.0, 5.7, 4), 5);
+  ASSERT_EQ(widthBucket(-0.9, 5.2, 0.5, 2), 3);
+
+  // Edge cases
+  ASSERT_EQ(widthBucket(0.0, 0.0, 10.0, 5), 1);
+  ASSERT_EQ(widthBucket(10.0, 0.0, 10.0, 5), 6);
+  ASSERT_EQ(widthBucket(5.0, 0.0, 10.0, 5), 3);
+
+  // Reversed range
+  ASSERT_EQ(widthBucket(5.0, 10.0, 0.0, 5), 3);
+  ASSERT_EQ(widthBucket(0.0, 10.0, 0.0, 5), 6);
+  ASSERT_EQ(widthBucket(10.0, 10.0, 0.0, 5), 1);
+
+  // Equal min and max
+  ASSERT_EQ(widthBucket(5.0, 5.0, 5.0, 5), 0);
+}
+
+TEST_F(SparkFunctionTest, widthBucketInteger) {
+  auto widthBucket = [&](int32_t value, int32_t minValue, int32_t maxValue, int64_t numBucket) {
+    return evaluateOnce<int64_t>(
+        "width_bucket(c0, c1, c2, c3)",
+        makeRowVector({
+            makeConstant<int32_t>(value, 1),
+            makeConstant<int32_t>(minValue, 1),
+            makeConstant<int32_t>(maxValue, 1),
+            makeConstant<int64_t>(numBucket, 1),
+        }));
+  };
+
+  // Basic cases
+  ASSERT_EQ(widthBucket(2, 0, 4, 3), 2);
+  ASSERT_EQ(widthBucket(0, 0, 10, 5), 1);
+  ASSERT_EQ(widthBucket(10, 0, 10, 5), 6);
+  ASSERT_EQ(widthBucket(-1, 0, 10, 5), 0);
+  ASSERT_EQ(widthBucket(11, 0, 10, 5), 6);
+}

@@ -57,7 +57,15 @@ void registerFunctionOverwrite() {
   velox::registerFunction<RoundFunction, double, double, int32_t>({"round"});
   velox::registerFunction<RoundFunction, float, float, int32_t>({"round"});
 
-  auto kRowConstructorWithNull = RowConstructorWithNullCallToSpecialForm::kRowConstructorWithNull;
+  // Register width_bucket function for numeric types
+  velox::registerFunction<WidthBucketFunction<double>, int64_t, double, double, double, int64_t>({"width_bucket"});
+  velox::registerFunction<WidthBucketFunction<float>, int64_t, float, float, float, int64_t>({"width_bucket"});
+  velox::registerFunction<WidthBucketFunction<int64_t>, int64_t, int64_t, int64_t, int64_t, int64_t>({"width_bucket"});
+  velox::registerFunction<WidthBucketFunction<int32_t>, int64_t, int32_t, int32_t, int32_t, int64_t>({"width_bucket"});
+  velox::registerFunction<WidthBucketFunction<int16_t>, int64_t, int16_t, int16_t, int16_t, int64_t>({"width_bucket"});
+  velox::registerFunction<WidthBucketFunction<int8_t>, int64_t, int8_t, int8_t, int8_t, int64_t>({"width_bucket"});
+
+  auto kRowConstructorWithNull= RowConstructorWithNullCallToSpecialForm::kRowConstructorWithNull;
   velox::exec::registerVectorFunction(
       kRowConstructorWithNull,
       std::vector<std::shared_ptr<velox::exec::FunctionSignature>>{},
