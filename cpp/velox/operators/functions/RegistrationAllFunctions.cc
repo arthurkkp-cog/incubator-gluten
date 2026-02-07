@@ -17,6 +17,7 @@
 #include "operators/functions/RegistrationAllFunctions.h"
 
 #include "operators/functions/Arithmetic.h"
+#include "operators/functions/MakeDTInterval.h"
 #include "operators/functions/RowConstructorWithNull.h"
 #include "operators/functions/RowFunctionWithNull.h"
 #include "velox/expression/SpecialFormRegistry.h"
@@ -50,6 +51,16 @@ namespace {
 
 void registerFunctionOverwrite() {
   velox::functions::registerUnaryNumeric<RoundFunction>({"round"});
+
+  velox::registerFunction<MakeDTIntervalFunction, velox::IntervalDayTime>({"make_dt_interval"});
+  velox::registerFunction<MakeDTIntervalFunction, velox::IntervalDayTime, int32_t>({"make_dt_interval"});
+  velox::registerFunction<MakeDTIntervalFunction, velox::IntervalDayTime, int32_t, int32_t>({"make_dt_interval"});
+  velox::registerFunction<MakeDTIntervalFunction, velox::IntervalDayTime, int32_t, int32_t, int32_t>(
+      {"make_dt_interval"});
+  velox::registerFunction<MakeDTIntervalFunction, velox::IntervalDayTime, int32_t, int32_t, int32_t, int64_t>(
+      {"make_dt_interval"});
+  velox::registerFunction<MakeDTIntervalFunction, velox::IntervalDayTime, int32_t, int32_t, int32_t, double>(
+      {"make_dt_interval"});
   velox::registerFunction<RoundFunction, int8_t, int8_t, int32_t>({"round"});
   velox::registerFunction<RoundFunction, int16_t, int16_t, int32_t>({"round"});
   velox::registerFunction<RoundFunction, int32_t, int32_t, int32_t>({"round"});
