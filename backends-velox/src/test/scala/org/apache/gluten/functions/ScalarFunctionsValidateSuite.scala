@@ -764,6 +764,16 @@ abstract class ScalarFunctionsValidateSuite extends FunctionsValidateSuite {
         runQueryAndCompare("select filter(value, x -> x is not null) as res from array_tbl;") {
           checkGlutenPlan[ProjectExecTransformer]
         }
+
+        // Test filter with index argument
+        runQueryAndCompare(
+          "select filter(value, (x, i) -> x is not null and i < 3) as res from array_tbl;") {
+          checkGlutenPlan[ProjectExecTransformer]
+        }
+
+        runQueryAndCompare("select filter(value, (x, i) -> x > i) as res from array_tbl;") {
+          checkGlutenPlan[ProjectExecTransformer]
+        }
     }
   }
 
