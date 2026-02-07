@@ -111,3 +111,34 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, arraysOverlap) {
+  auto arrayVector1 = makeNullableArrayVector<int64_t>(
+      {{1, 2, 3}, {4, 5, 6}, {1, 2, std::nullopt}, {7, 8, 9}, {}, {1, 2, 3}, std::nullopt});
+  auto arrayVector2 = makeNullableArrayVector<int64_t>(
+      {{3, 4, 5}, {7, 8, 9}, {4, 5, 6}, {7, std::nullopt, 10}, {}, {10, 11, 12}, {1, 2, 3}});
+
+  auto result =
+      evaluate<SimpleVector<bool>>("arrays_overlap(c0, c1)", makeRowVector({arrayVector1, arrayVector2}));
+
+  ASSERT_EQ(result->size(), 7);
+  ASSERT_TRUE(result->valueAt(0));
+  ASSERT_FALSE(result->valueAt(1));
+  ASSERT_TRUE(result->isNullAt(2));
+  ASSERT_TRUE(result->valueAt(3));
+  ASSERT_FALSE(result->valueAt(4));
+  ASSERT_FALSE(result->valueAt(5));
+  ASSERT_TRUE(result->isNullAt(6));
+}
+
+TEST_F(SparkFunctionTest, arraysOverlapWithStrings) {
+  auto arrayVector1 = makeNullableArrayVector<StringView>({{"a"_sv, "b"_sv, "c"_sv}, {"d"_sv, "e"_sv, "f"_sv}});
+  auto arrayVector2 = makeNullableArrayVector<StringView>({{"c"_sv, "d"_sv, "e"_sv}, {"g"_sv, "h"_sv, "i"_sv}});
+
+  auto result =
+      evaluate<SimpleVector<bool>>("arrays_overlap(c0, c1)", makeRowVector({arrayVector1, arrayVector2}));
+
+  ASSERT_EQ(result->size(), 2);
+  ASSERT_TRUE(result->valueAt(0));
+  ASSERT_FALSE(result->valueAt(1));
+}
