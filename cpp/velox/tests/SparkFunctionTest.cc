@@ -111,3 +111,56 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, schemaOfJson) {
+  // Test basic object schema inference.
+  auto result = evaluate<SimpleVector<StringView>>(
+      "schema_of_json(c0)",
+      makeRowVector({makeFlatVector<StringView>({R"({"a":1,"b":"hello"})"})}));
+  ASSERT_EQ(result->valueAt(0).str(), "STRUCT<a: BIGINT, b: STRING>");
+
+  // Test array schema inference.
+  result = evaluate<SimpleVector<StringView>>(
+      "schema_of_json(c0)", makeRowVector({makeFlatVector<StringView>({R"([{"col":0}])"})}));
+  ASSERT_EQ(result->valueAt(0).str(), "ARRAY<STRUCT<col: BIGINT>>");
+
+  // Test nested object schema inference.
+  result = evaluate<SimpleVector<StringView>>(
+      "schema_of_json(c0)", makeRowVector({makeFlatVector<StringView>({R"({"a":{"b":1}})"})}));
+  ASSERT_EQ(result->valueAt(0).str(), "STRUCT<a: STRUCT<b: BIGINT>>");
+
+  // Test boolean type inference.
+  result = evaluate<SimpleVector<StringView>>(
+      "schema_of_json(c0)", makeRowVector({makeFlatVector<StringView>({R"({"flag":true})"})}));
+  ASSERT_EQ(result->valueAt(0).str(), "STRUCT<flag: BOOLEAN>");
+
+  // Test double type inference.
+  result = evaluate<SimpleVector<StringView>>(
+      "schema_of_json(c0)", makeRowVector({makeFlatVector<StringView>({R"({"value":1.5})"})}));
+  ASSERT_EQ(result->valueAt(0).str(), "STRUCT<value: DOUBLE>");
+
+  // Test null type inference (returns STRING for null).
+  result = evaluate<SimpleVector<StringView>>(
+      "schema_of_json(c0)", makeRowVector({makeFlatVector<StringView>({R"({"value":null})"})}));
+  ASSERT_EQ(result->valueAt(0).str(), "STRUCT<value: STRING>");
+
+  // Test empty object.
+  result = evaluate<SimpleVector<StringView>>(
+      "schema_of_json(c0)", makeRowVector({makeFlatVector<StringView>({R"({})"})}));
+  ASSERT_EQ(result->valueAt(0).str(), "STRUCT<>");
+
+  // Test empty array.
+  result = evaluate<SimpleVector<StringView>>(
+      "schema_of_json(c0)", makeRowVector({makeFlatVector<StringView>({R"([])"})}));
+  ASSERT_EQ(result->valueAt(0).str(), "ARRAY<STRING>");
+
+  // Test simple string value.
+  result = evaluate<SimpleVector<StringView>>(
+      "schema_of_json(c0)", makeRowVector({makeFlatVector<StringView>({R"("hello")"})}));
+  ASSERT_EQ(result->valueAt(0).str(), "STRING");
+
+  // Test simple integer value.
+  result = evaluate<SimpleVector<StringView>>(
+      "schema_of_json(c0)", makeRowVector({makeFlatVector<StringView>({R"(42)"})}));
+  ASSERT_EQ(result->valueAt(0).str(), "BIGINT");
+}
