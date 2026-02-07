@@ -454,6 +454,109 @@ abstract class ScalarFunctionsValidateSuite extends FunctionsValidateSuite {
     }
   }
 
+  test("zip_with - arrays of different lengths") {
+    withTempPath {
+      path =>
+        Seq[(Seq[Integer], Seq[Integer])](
+          (Seq(1, 2, 3), Seq(4, 5, 6)),
+          (Seq(1, 2), Seq(4, 5, 6)),
+          (Seq(1, 2, 3), Seq(4, 5)),
+          (Seq(1), Seq(2, 3, 4, 5)),
+          (Seq.empty, Seq(1, 2, 3)),
+          (Seq(1, 2, 3), Seq.empty)
+        ).toDF("val1", "val2")
+          .write
+          .parquet(path.getCanonicalPath)
+
+        spark.read.parquet(path.getCanonicalPath).createOrReplaceTempView("array_tbl")
+
+        runQueryAndCompare("select zip_with(val1, val2, (x, y) -> x + y) from array_tbl") {
+          checkGlutenPlan[ProjectExecTransformer]
+        }
+    }
+  }
+
+  test("zip_with - null array elements") {
+    withTempPath {
+      path =>
+        Seq[(Seq[Integer], Seq[Integer])](
+          (Seq(1, null, 3), Seq(4, 5, 6)),
+          (Seq(1, 2, 3), Seq(null, 5, null)),
+          (Seq(null, null), Seq(null, null)),
+          (null, Seq(4, 5, 6)),
+          (Seq(1, 2, 3), null)
+        ).toDF("val1", "val2")
+          .write
+          .parquet(path.getCanonicalPath)
+
+        spark.read.parquet(path.getCanonicalPath).createOrReplaceTempView("array_tbl")
+
+        runQueryAndCompare("select zip_with(val1, val2, (x, y) -> x + y) from array_tbl") {
+          checkGlutenPlan[ProjectExecTransformer]
+        }
+    }
+  }
+
+  test("zip_with - string arrays") {
+    withTempPath {
+      path =>
+        Seq[(Seq[String], Seq[String])](
+          (Seq("a", "b", "c"), Seq("x", "y", "z")),
+          (Seq("hello", "world"), Seq("foo", "bar")),
+          (Seq("a"), Seq("b", "c")),
+          (Seq.empty, Seq.empty),
+          (null, null)
+        ).toDF("val1", "val2")
+          .write
+          .parquet(path.getCanonicalPath)
+
+        spark.read.parquet(path.getCanonicalPath).createOrReplaceTempView("array_tbl")
+
+        runQueryAndCompare("select zip_with(val1, val2, (x, y) -> concat(x, y)) from array_tbl") {
+          checkGlutenPlan[ProjectExecTransformer]
+        }
+    }
+  }
+
+  test("zip_with - double arrays") {
+    withTempPath {
+      path =>
+        Seq[(Seq[java.lang.Double], Seq[java.lang.Double])](
+          (Seq(1.1, 2.2, 3.3), Seq(4.4, 5.5, 6.6)),
+          (Seq(0.0, -1.5), Seq(2.5, 3.5, 4.5)),
+          (Seq.empty, Seq.empty),
+          (null, null)
+        ).toDF("val1", "val2")
+          .write
+          .parquet(path.getCanonicalPath)
+
+        spark.read.parquet(path.getCanonicalPath).createOrReplaceTempView("array_tbl")
+
+        runQueryAndCompare("select zip_with(val1, val2, (x, y) -> x * y) from array_tbl") {
+          checkGlutenPlan[ProjectExecTransformer]
+        }
+    }
+  }
+
+  test("zip_with - complex lambda expression") {
+    withTempPath {
+      path =>
+        Seq[(Seq[Integer], Seq[Integer])](
+          (Seq(1, 2, 3), Seq(4, 5, 6)),
+          (Seq(10, 20), Seq(30, 40)),
+          (Seq.empty, Seq.empty)
+        ).toDF("val1", "val2")
+          .write
+          .parquet(path.getCanonicalPath)
+
+        spark.read.parquet(path.getCanonicalPath).createOrReplaceTempView("array_tbl")
+
+        runQueryAndCompare("select zip_with(val1, val2, (x, y) -> x * 2 + y * 3) from array_tbl") {
+          checkGlutenPlan[ProjectExecTransformer]
+        }
+    }
+  }
+
   test("isnan") {
     runQueryAndCompare(
       "SELECT isnan(l_orderkey), isnan(cast('NaN' as double)), isnan(0.0F/0.0F)" +
