@@ -19,6 +19,7 @@
 
 #include "operators/functions/RegistrationAllFunctions.h"
 #include "velox/functions/sparksql/tests/SparkFunctionBaseTest.h"
+#include "velox/type/Timestamp.h"
 
 using namespace facebook::velox::functions::sparksql::test;
 using namespace facebook::velox;
@@ -110,4 +111,36 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int32_t>(testRoundWithDecIntegralData<int32_t>());
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
+}
+
+TEST_F(SparkFunctionTest, fromUtcTimestamp) {
+  const auto fromUtcTimestamp = [&](std::optional<Timestamp> timestamp,
+                                    std::optional<std::string> timezone) {
+    return evaluateOnce<Timestamp>(
+        "from_utc_timestamp(c0, c1)", timestamp, timezone);
+  };
+
+  EXPECT_EQ(
+      parseTimestamp("2015-07-24 00:00:00"),
+      fromUtcTimestamp(parseTimestamp("2015-07-24 07:00:00"), "America/Los_Angeles"));
+  EXPECT_EQ(
+      parseTimestamp("2015-01-24 00:00:00"),
+      fromUtcTimestamp(parseTimestamp("2015-01-24 08:00:00"), "America/Los_Angeles"));
+
+  EXPECT_EQ(
+      parseTimestamp("2015-01-24 00:00:00"),
+      fromUtcTimestamp(parseTimestamp("2015-01-24 00:00:00"), "UTC"));
+
+  EXPECT_EQ(
+      parseTimestamp("2015-01-24 05:30:00"),
+      fromUtcTimestamp(parseTimestamp("2015-01-24 00:00:00"), "Asia/Kolkata"));
+
+  EXPECT_EQ(
+      parseTimestamp("2015-01-24 08:00:00"),
+      fromUtcTimestamp(parseTimestamp("2015-01-24 00:00:00"), "+08:00"));
+
+  EXPECT_EQ(std::nullopt, fromUtcTimestamp(std::nullopt, "America/Los_Angeles"));
+  EXPECT_EQ(
+      std::nullopt,
+      fromUtcTimestamp(parseTimestamp("2015-01-24 00:00:00"), std::nullopt));
 }
