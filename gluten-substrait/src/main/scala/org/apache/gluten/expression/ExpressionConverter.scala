@@ -882,6 +882,12 @@ object ExpressionConverter extends SQLConfHelper with Logging {
           replaceWithExpressionTransformer0(s.child, attributeSeq, expressionsMap),
           s
         )
+      case s: StructsToCsv =>
+        BackendsApiManager.getSparkPlanExecApiInstance.genToCsvTransformer(
+          substraitExprName,
+          replaceWithExpressionTransformer0(s.child, attributeSeq, expressionsMap),
+          s
+        )
       case u: UnBase64 =>
         BackendsApiManager.getSparkPlanExecApiInstance.genUnbase64Transformer(
           substraitExprName,

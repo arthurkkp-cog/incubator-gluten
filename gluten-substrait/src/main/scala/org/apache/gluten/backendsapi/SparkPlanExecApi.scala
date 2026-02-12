@@ -175,6 +175,13 @@ trait SparkPlanExecApi {
     GenericExpressionTransformer(substraitExprName, child, expr)
   }
 
+  def genToCsvTransformer(
+      substraitExprName: String,
+      child: ExpressionTransformer,
+      expr: StructsToCsv): ExpressionTransformer = {
+    GenericExpressionTransformer(substraitExprName, child, expr)
+  }
+
   def genUnbase64Transformer(
       substraitExprName: String,
       child: ExpressionTransformer,

@@ -212,6 +212,8 @@ object ExpressionMappings {
     Sig[JsonToStructs](FROM_JSON),
     Sig[JsonTuple](JSON_TUPLE),
     Sig[JsonObjectKeys](JSON_OBJECT_KEYS),
+    // CSV functions
+    Sig[StructsToCsv](TO_CSV),
     // Hash functions
     Sig[Murmur3Hash](MURMUR3HASH),
     Sig[XxHash64](XXHASH64),
