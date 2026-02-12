@@ -111,3 +111,46 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, decodeUtf8) {
+  auto binVector = makeFlatVector<StringView>(
+      {StringView("hello"), StringView("world"), StringView("")}, VARBINARY());
+  auto charsetVector = makeFlatVector<StringView>(
+      {StringView("UTF-8"), StringView("UTF-8"), StringView("UTF-8")});
+  auto result = evaluate<SimpleVector<StringView>>(
+      "decode(c0, c1)", makeRowVector({binVector, charsetVector}));
+  ASSERT_EQ(result->valueAt(0).str(), "hello");
+  ASSERT_EQ(result->valueAt(1).str(), "world");
+  ASSERT_EQ(result->valueAt(2).str(), "");
+}
+
+TEST_F(SparkFunctionTest, decodeUtf8CaseInsensitive) {
+  auto binVector = makeFlatVector<StringView>(
+      {StringView("test")}, VARBINARY());
+  auto charsetVector = makeFlatVector<StringView>(
+      {StringView("utf-8")});
+  auto result = evaluate<SimpleVector<StringView>>(
+      "decode(c0, c1)", makeRowVector({binVector, charsetVector}));
+  ASSERT_EQ(result->valueAt(0).str(), "test");
+}
+
+TEST_F(SparkFunctionTest, decodeUsAscii) {
+  auto binVector = makeFlatVector<StringView>(
+      {StringView("ABC"), StringView("123")}, VARBINARY());
+  auto charsetVector = makeFlatVector<StringView>(
+      {StringView("US-ASCII"), StringView("US-ASCII")});
+  auto result = evaluate<SimpleVector<StringView>>(
+      "decode(c0, c1)", makeRowVector({binVector, charsetVector}));
+  ASSERT_EQ(result->valueAt(0).str(), "ABC");
+  ASSERT_EQ(result->valueAt(1).str(), "123");
+}
+
+TEST_F(SparkFunctionTest, decodeIso88591) {
+  auto binVector = makeFlatVector<StringView>(
+      {StringView("hello")}, VARBINARY());
+  auto charsetVector = makeFlatVector<StringView>(
+      {StringView("ISO-8859-1")});
+  auto result = evaluate<SimpleVector<StringView>>(
+      "decode(c0, c1)", makeRowVector({binVector, charsetVector}));
+  ASSERT_EQ(result->valueAt(0).str(), "hello");
+}
