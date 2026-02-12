@@ -63,4 +63,49 @@ struct RoundFunction {
     result = round(a, b);
   }
 };
+
+/// WidthBucket function
+/// Returns the bucket number to which value would be assigned in an equiwidth histogram
+/// with numBucket buckets, in the range minValue to maxValue.
+/// Follows Spark SQL semantics:
+/// - Returns 0 if value is below the range
+/// - Returns numBucket + 1 if value is above the range
+/// - Returns bucket number (1 to numBucket) otherwise
+template <typename T>
+struct WidthBucketFunction {
+  FOLLY_ALWAYS_INLINE void call(int64_t& result, const T& value, const T& minValue, const T& maxValue, const int64_t& numBucket) {
+    if constexpr (std::is_floating_point_v<T>) {
+      if (std::isnan(value) || std::isnan(minValue) || std::isnan(maxValue)) {
+        result = 0;
+        return;
+      }
+    }
+
+    if (minValue < maxValue) {
+      if (value < minValue) {
+        result = 0;
+      } else if (value >= maxValue) {
+        result = numBucket + 1;
+      } else {
+        result = static_cast<int64_t>(
+            std::floor((static_cast<long double>(value) - static_cast<long double>(minValue)) /
+                       (static_cast<long double>(maxValue) - static_cast<long double>(minValue)) *
+                       static_cast<long double>(numBucket))) + 1;
+      }
+    } else if (minValue > maxValue) {
+      if (value > minValue) {
+        result = 0;
+      } else if (value <= maxValue) {
+        result = numBucket + 1;
+      } else {
+        result = static_cast<int64_t>(
+            std::floor((static_cast<long double>(minValue) - static_cast<long double>(value)) /
+                       (static_cast<long double>(minValue) - static_cast<long double>(maxValue)) *
+                       static_cast<long double>(numBucket))) + 1;
+      }
+    } else {
+      result = 0;
+    }
+  }
+};
 } // namespace gluten
