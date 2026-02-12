@@ -111,3 +111,31 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, schemaOfCsv) {
+  // Test basic CSV with comma delimiter (default)
+  auto result1 = evaluate<SimpleVector<StringView>>(
+      "schema_of_csv(c0)", makeRowVector({makeFlatVector<StringView>({"1,abc"})}));
+  ASSERT_EQ(result1->valueAt(0).getString(), "STRUCT<_c0: INT, _c1: STRING>");
+
+  // Test CSV with multiple columns and different types
+  auto result2 = evaluate<SimpleVector<StringView>>(
+      "schema_of_csv(c0)", makeRowVector({makeFlatVector<StringView>({"1,2.5,true,hello"})}));
+  ASSERT_EQ(result2->valueAt(0).getString(), "STRUCT<_c0: INT, _c1: DOUBLE, _c2: BOOLEAN, _c3: STRING>");
+
+  // Test CSV with custom delimiter
+  auto result3 = evaluate<SimpleVector<StringView>>(
+      "schema_of_csv(c0, c1)",
+      makeRowVector({makeFlatVector<StringView>({"1|abc"}), makeFlatVector<StringView>({"|"})}));
+  ASSERT_EQ(result3->valueAt(0).getString(), "STRUCT<_c0: INT, _c1: STRING>");
+
+  // Test CSV with negative numbers
+  auto result4 = evaluate<SimpleVector<StringView>>(
+      "schema_of_csv(c0)", makeRowVector({makeFlatVector<StringView>({"-123,45.67"})}));
+  ASSERT_EQ(result4->valueAt(0).getString(), "STRUCT<_c0: INT, _c1: DOUBLE>");
+
+  // Test CSV with empty string
+  auto result5 = evaluate<SimpleVector<StringView>>(
+      "schema_of_csv(c0)", makeRowVector({makeFlatVector<StringView>({""})}));
+  ASSERT_EQ(result5->valueAt(0).getString(), "STRUCT<_c0: STRING>");
+}
