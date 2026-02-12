@@ -57,12 +57,12 @@ void registerFunctionOverwrite() {
   velox::registerFunction<RoundFunction, double, double, int32_t>({"round"});
   velox::registerFunction<RoundFunction, float, float, int32_t>({"round"});
 
-  velox::registerFunction<CotFunction<double>, double, double>({"cot"});
-  velox::registerFunction<CotFunction<float>, double, float>({"cot"});
-  velox::registerFunction<CotFunction<int64_t>, double, int64_t>({"cot"});
-  velox::registerFunction<CotFunction<int32_t>, double, int32_t>({"cot"});
-  velox::registerFunction<CotFunction<int16_t>, double, int16_t>({"cot"});
-  velox::registerFunction<CotFunction<int8_t>, double, int8_t>({"cot"});
+  velox::registerFunction<CotFunction, double, double>({"cot"});
+  velox::registerFunction<CotFunction, double, float>({"cot"});
+  velox::registerFunction<CotFunction, double, int64_t>({"cot"});
+  velox::registerFunction<CotFunction, double, int32_t>({"cot"});
+  velox::registerFunction<CotFunction, double, int16_t>({"cot"});
+  velox::registerFunction<CotFunction, double, int8_t>({"cot"});
 
   auto kRowConstructorWithNull = RowConstructorWithNullCallToSpecialForm::kRowConstructorWithNull;
   velox::exec::registerVectorFunction(

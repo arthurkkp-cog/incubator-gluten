@@ -63,9 +63,9 @@ struct RoundFunction {
     result = round(a, b);
   }
 };
-template <typename T>
 struct CotFunction {
-  FOLLY_ALWAYS_INLINE void call(double& result, const T& a) {
+  template <typename TInput>
+  FOLLY_ALWAYS_INLINE void call(double& result, const TInput& a) {
     result = 1.0 / std::tan(static_cast<double>(a));
   }
 };
