@@ -111,3 +111,42 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, levenshtein) {
+  const auto levenshtein = [&](const std::optional<std::string>& left, const std::optional<std::string>& right) {
+    return evaluateOnce<int32_t>("levenshtein(c0, c1)", left, right);
+  };
+
+  ASSERT_EQ(levenshtein("", ""), 0);
+  ASSERT_EQ(levenshtein("a", ""), 1);
+  ASSERT_EQ(levenshtein("", "a"), 1);
+  ASSERT_EQ(levenshtein("abc", "abc"), 0);
+  ASSERT_EQ(levenshtein("kitten", "sitting"), 3);
+  ASSERT_EQ(levenshtein("frog", "fog"), 1);
+  ASSERT_EQ(levenshtein("hello", "hallo"), 1);
+  ASSERT_EQ(levenshtein("abc", "def"), 3);
+  ASSERT_EQ(levenshtein("abc", ""), 3);
+  ASSERT_EQ(levenshtein("", "abc"), 3);
+  ASSERT_EQ(levenshtein(std::nullopt, "abc"), std::nullopt);
+  ASSERT_EQ(levenshtein("abc", std::nullopt), std::nullopt);
+  ASSERT_EQ(levenshtein(std::nullopt, std::nullopt), std::nullopt);
+}
+
+TEST_F(SparkFunctionTest, levenshteinWithThreshold) {
+  const auto levenshtein = [&](const std::optional<std::string>& left,
+                               const std::optional<std::string>& right,
+                               const std::optional<int32_t>& threshold) {
+    return evaluateOnce<int32_t>("levenshtein(c0, c1, c2)", left, right, threshold);
+  };
+
+  ASSERT_EQ(levenshtein("kitten", "sitting", 3), 3);
+  ASSERT_EQ(levenshtein("kitten", "sitting", 2), -1);
+  ASSERT_EQ(levenshtein("abc", "abc", 0), 0);
+  ASSERT_EQ(levenshtein("abc", "def", 2), -1);
+  ASSERT_EQ(levenshtein("abc", "def", 3), 3);
+  ASSERT_EQ(levenshtein("abc", "def", 10), 3);
+  ASSERT_EQ(levenshtein("", "", 0), 0);
+  ASSERT_EQ(levenshtein("a", "", 0), -1);
+  ASSERT_EQ(levenshtein("a", "", 1), 1);
+  ASSERT_EQ(levenshtein("abc", "def", -1), -1);
+}
