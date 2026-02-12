@@ -15,9 +15,11 @@
  * limitations under the License.
  */
 
+#include <string>
 #include <vector>
 
 #include "operators/functions/RegistrationAllFunctions.h"
+#include "velox/common/base/tests/GTestUtils.h"
 #include "velox/functions/sparksql/tests/SparkFunctionBaseTest.h"
 
 using namespace facebook::velox::functions::sparksql::test;
@@ -110,4 +112,35 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int32_t>(testRoundWithDecIntegralData<int32_t>());
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
+}
+
+TEST_F(SparkFunctionTest, unbase64) {
+  const auto unbase64 = [&](const std::optional<std::string>& input) {
+    return evaluateOnce<std::string>("unbase64(c0)", input);
+  };
+
+  EXPECT_EQ(unbase64(std::nullopt), std::nullopt);
+  EXPECT_EQ(unbase64("TWFu"), "Man");
+  EXPECT_EQ(unbase64("TWFu\r\nTWFu"), "ManMan");
+  EXPECT_EQ(unbase64("aGVsbG8gd29ybGQ="), "hello world");
+  EXPECT_EQ(unbase64("U3BhcmsgU1FM"), "Spark SQL");
+  EXPECT_EQ(unbase64("#"), "");
+  EXPECT_EQ(unbase64("YQ==="), "a");
+  EXPECT_EQ(unbase64("aA"), "h");
+  EXPECT_EQ(unbase64("c3d"), "sw");
+}
+
+TEST_F(SparkFunctionTest, unbase64Error) {
+  const auto unbase64 = [&](const std::optional<std::string>& input) {
+    return evaluateOnce<std::string>("unbase64(c0)", input);
+  };
+
+  VELOX_ASSERT_USER_THROW(
+      unbase64("aGVsx"), "Last unit does not have enough valid bits");
+  VELOX_ASSERT_USER_THROW(
+      unbase64("xx=y"), "Input byte array has wrong 4-byte ending unit");
+  VELOX_ASSERT_USER_THROW(
+      unbase64("xx="), "Input byte array has wrong 4-byte ending unit");
+  VELOX_ASSERT_USER_THROW(
+      unbase64("a"), "Input should at least have 2 bytes for base64 bytes");
 }
