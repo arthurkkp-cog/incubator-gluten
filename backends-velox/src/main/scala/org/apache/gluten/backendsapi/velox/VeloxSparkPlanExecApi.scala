@@ -181,9 +181,6 @@ class VeloxSparkPlanExecApi extends SparkPlanExecApi {
       // Transformer for array_compact.
       case LambdaFunction(_: IsNotNull, _, _) =>
         GenericExpressionTransformer(ExpressionNames.ARRAY_COMPACT, Seq(argument), expr)
-      case LambdaFunction(_, arguments, _) if arguments.size == 2 =>
-        throw new GlutenNotSupportException(
-          "filter on array with lambda using index argument is not supported yet")
       case _ => GenericExpressionTransformer(substraitExprName, Seq(argument, function), expr)
     }
   }
