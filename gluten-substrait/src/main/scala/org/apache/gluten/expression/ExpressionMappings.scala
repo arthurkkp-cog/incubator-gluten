@@ -327,7 +327,8 @@ object ExpressionMappings {
     Sig[Kurtosis](KURTOSIS),
     Sig[ApproximatePercentile](APPROX_PERCENTILE),
     Sig[HyperLogLogPlusPlus](APPROX_COUNT_DISTINCT),
-    Sig[Percentile](PERCENTILE)
+    Sig[Percentile](PERCENTILE),
+    Sig[CountMinSketchAgg](COUNT_MIN_SKETCH)
   ) ++ SparkShimLoader.getSparkShims.aggregateExpressionMappings
 
   /** Mapping Spark window expression to Substrait function name */
