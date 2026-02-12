@@ -17,6 +17,7 @@
 #include "operators/functions/RegistrationAllFunctions.h"
 
 #include "operators/functions/Arithmetic.h"
+#include "operators/functions/FormatNumber.h"
 #include "operators/functions/RowConstructorWithNull.h"
 #include "operators/functions/RowFunctionWithNull.h"
 #include "velox/expression/SpecialFormRegistry.h"
@@ -75,6 +76,13 @@ void registerFunctionOverwrite() {
   velox::exec::registerFunctionCallToSpecialForm(
       kRowConstructorWithAllNull,
       std::make_unique<RowConstructorWithNullCallToSpecialForm>(kRowConstructorWithAllNull));
+
+  velox::registerFunction<FormatNumberFunction, velox::Varchar, double, int32_t>({"format_number"});
+  velox::registerFunction<FormatNumberFunction, velox::Varchar, float, int32_t>({"format_number"});
+  velox::registerFunction<FormatNumberFunction, velox::Varchar, int64_t, int32_t>({"format_number"});
+  velox::registerFunction<FormatNumberFunction, velox::Varchar, int32_t, int32_t>({"format_number"});
+  velox::registerFunction<FormatNumberFunction, velox::Varchar, int16_t, int32_t>({"format_number"});
+  velox::registerFunction<FormatNumberFunction, velox::Varchar, int8_t, int32_t>({"format_number"});
 
   velox::functions::registerPrestoVectorFunctions();
 }
