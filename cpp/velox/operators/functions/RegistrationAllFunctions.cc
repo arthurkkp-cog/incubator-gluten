@@ -19,6 +19,9 @@
 #include "operators/functions/Arithmetic.h"
 #include "operators/functions/RowConstructorWithNull.h"
 #include "operators/functions/RowFunctionWithNull.h"
+#include "operators/functions/SparkParseUrl.h"
+#include <velox/functions/Macros.h>
+#include <velox/functions/Registerer.h>
 #include "velox/expression/SpecialFormRegistry.h"
 #include "velox/expression/VectorFunction.h"
 #include "velox/functions/iceberg/Register.h"
@@ -77,6 +80,9 @@ void registerFunctionOverwrite() {
       std::make_unique<RowConstructorWithNullCallToSpecialForm>(kRowConstructorWithAllNull));
 
   velox::functions::registerPrestoVectorFunctions();
+
+  velox::registerFunction<ParseUrlFunction, Varchar, Varchar, Varchar>({"parse_url"});
+  velox::registerFunction<ParseUrlWithKeyFunction, Varchar, Varchar, Varchar, Varchar>({"parse_url"});
 }
 
 } // namespace
