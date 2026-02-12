@@ -17,6 +17,7 @@
 #include "operators/functions/RegistrationAllFunctions.h"
 
 #include "operators/functions/Arithmetic.h"
+#include "operators/functions/Randn.h"
 #include "operators/functions/RowConstructorWithNull.h"
 #include "operators/functions/RowFunctionWithNull.h"
 #include "velox/expression/SpecialFormRegistry.h"
@@ -77,6 +78,10 @@ void registerFunctionOverwrite() {
       std::make_unique<RowConstructorWithNullCallToSpecialForm>(kRowConstructorWithAllNull));
 
   velox::functions::registerPrestoVectorFunctions();
+
+  velox::registerFunction<RandnFunction, double>({"randn"});
+  velox::registerFunction<RandnFunction, double, velox::Constant<int32_t>>({"randn"});
+  velox::registerFunction<RandnFunction, double, velox::Constant<int64_t>>({"randn"});
 }
 
 } // namespace

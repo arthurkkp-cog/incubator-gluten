@@ -155,6 +155,7 @@ object ExpressionMappings {
     Sig[Remainder](REMAINDER),
     Sig[Factorial](FACTORIAL),
     Sig[Rand](RAND),
+    Sig[Randn](RANDN),
     Sig[Rint](RINT),
     // PrestoSQL Math functions
     Sig[Acos](ACOS),

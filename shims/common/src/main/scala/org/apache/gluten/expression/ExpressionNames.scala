@@ -193,6 +193,7 @@ object ExpressionNames {
   final val REMAINDER = "modulus"
   final val FACTORIAL = "factorial"
   final val RAND = "rand"
+  final val RANDN = "randn"
   final val RINT = "rint"
   final val RIGHT = "right"
 
