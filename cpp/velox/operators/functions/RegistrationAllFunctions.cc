@@ -17,6 +17,7 @@
 #include "operators/functions/RegistrationAllFunctions.h"
 
 #include "operators/functions/Arithmetic.h"
+#include "operators/functions/DateTimeFunctions.h"
 #include "operators/functions/RowConstructorWithNull.h"
 #include "operators/functions/RowFunctionWithNull.h"
 #include "velox/expression/SpecialFormRegistry.h"
@@ -75,6 +76,8 @@ void registerFunctionOverwrite() {
   velox::exec::registerFunctionCallToSpecialForm(
       kRowConstructorWithAllNull,
       std::make_unique<RowConstructorWithNullCallToSpecialForm>(kRowConstructorWithAllNull));
+
+  velox::registerFunction<FromUtcTimestampFunction, Timestamp, Timestamp, Varchar>({"from_utc_timestamp"});
 
   velox::functions::registerPrestoVectorFunctions();
 }
