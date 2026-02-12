@@ -31,6 +31,83 @@ class SparkFunctionTest : public SparkFunctionBaseTest {
 
  protected:
   template <typename T>
+  void runBRoundTest(const std::vector<std::tuple<T, T>>& data) {
+    auto result = evaluate<SimpleVector<T>>("bround(c0)", makeRowVector({makeFlatVector<T, 0>(data)}));
+    for (int32_t i = 0; i < data.size(); ++i) {
+      ASSERT_EQ(result->valueAt(i), std::get<1>(data[i]));
+    }
+  }
+
+  template <typename T>
+  void runBRoundWithDecimalTest(const std::vector<std::tuple<T, int32_t, T>>& data) {
+    auto result = evaluate<SimpleVector<T>>(
+        "bround(c0, c1)", makeRowVector({makeFlatVector<T, 0>(data), makeFlatVector<int32_t, 1>(data)}));
+    for (int32_t i = 0; i < data.size(); ++i) {
+      ASSERT_EQ(result->valueAt(i), std::get<2>(data[i]));
+    }
+  }
+
+  template <typename T>
+  std::vector<std::tuple<T, T>> testBRoundFloatData() {
+    return {
+        {0.5, 0.0},
+        {1.5, 2.0},
+        {2.5, 2.0},
+        {3.5, 4.0},
+        {4.5, 4.0},
+        {-0.5, 0.0},
+        {-1.5, -2.0},
+        {-2.5, -2.0},
+        {1.0, 1.0},
+        {1.3, 1.0},
+        {1.9, 2.0},
+        {0.0, 0.0}};
+  }
+
+  template <typename T>
+  std::vector<std::tuple<T, T>> testBRoundIntegralData() {
+    return {{1, 1}, {0, 0}, {-1, -1}, {2, 2}};
+  }
+
+  template <typename T>
+  std::vector<std::tuple<T, int32_t, T>> testBRoundWithDecFloatAndDoubleData() {
+    return {
+        {2.5, 0, 2.0},
+        {3.5, 0, 4.0},
+        {2.25, 1, 2.2},
+        {2.35, 1, 2.4},
+        {2.45, 1, 2.4},
+        {-2.5, 0, -2.0},
+        {-3.5, 0, -4.0},
+        {1.0 / 3, 2, 0.33},
+        {1.0 / 3, 6, 0.333333},
+        {1.0, -1, 0.0},
+        {0.0, -2, 0.0},
+        {11111.0, -1, 11110.0},
+        {11111.0, -2, 11100.0},
+        {15.0, -1, 20.0},
+        {25.0, -1, 20.0},
+        {35.0, -1, 40.0}};
+  }
+
+  template <typename T>
+  std::vector<std::tuple<T, int32_t, T>> testBRoundWithDecIntegralData() {
+    return {
+        {1, 0, 1},
+        {0, 0, 0},
+        {-1, 0, -1},
+        {1, 1, 1},
+        {0, 1, 0},
+        {-1, 1, -1},
+        {1, -1, 0},
+        {0, -2, 0},
+        {-1, -3, 0},
+        {15, -1, 20},
+        {25, -1, 20},
+        {35, -1, 40}};
+  }
+
+  template <typename T>
   void runRoundTest(const std::vector<std::tuple<T, T>>& data) {
     auto result = evaluate<SimpleVector<T>>("round(c0)", makeRowVector({makeFlatVector<T, 0>(data)}));
     for (int32_t i = 0; i < data.size(); ++i) {
@@ -110,4 +187,22 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int32_t>(testRoundWithDecIntegralData<int32_t>());
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
+}
+
+TEST_F(SparkFunctionTest, bround) {
+  runBRoundTest<float>(testBRoundFloatData<float>());
+  runBRoundTest<double>(testBRoundFloatData<double>());
+  runBRoundTest<int64_t>(testBRoundIntegralData<int64_t>());
+  runBRoundTest<int32_t>(testBRoundIntegralData<int32_t>());
+  runBRoundTest<int16_t>(testBRoundIntegralData<int16_t>());
+  runBRoundTest<int8_t>(testBRoundIntegralData<int8_t>());
+}
+
+TEST_F(SparkFunctionTest, broundWithDecimal) {
+  runBRoundWithDecimalTest<float>(testBRoundWithDecFloatAndDoubleData<float>());
+  runBRoundWithDecimalTest<double>(testBRoundWithDecFloatAndDoubleData<double>());
+  runBRoundWithDecimalTest<int64_t>(testBRoundWithDecIntegralData<int64_t>());
+  runBRoundWithDecimalTest<int32_t>(testBRoundWithDecIntegralData<int32_t>());
+  runBRoundWithDecimalTest<int16_t>(testBRoundWithDecIntegralData<int16_t>());
+  runBRoundWithDecimalTest<int8_t>(testBRoundWithDecIntegralData<int8_t>());
 }
