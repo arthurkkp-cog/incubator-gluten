@@ -37,6 +37,17 @@ case class ExtractDateTransformer(
   override def right: ExpressionTransformer = child
 }
 
+/** The extract transformer for Spark's Extract expression (extract(field FROM source)) */
+case class ExtractTransformer(
+    substraitExprName: String,
+    field: ExpressionTransformer,
+    source: ExpressionTransformer,
+    original: Extract)
+  extends BinaryExpressionTransformer {
+  override def left: ExpressionTransformer = field
+  override def right: ExpressionTransformer = source
+}
+
 case class TruncTimestampTransformer(
     substraitExprName: String,
     format: ExpressionTransformer,
