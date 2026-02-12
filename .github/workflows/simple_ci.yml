@@ -1,0 +1,127 @@
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.  See the NOTICE file distributed with
+# this work for additional information regarding copyright ownership.
+# The ASF licenses this file to You under the Apache License, Version 2.0
+# (the "License"); you may not use this file except in compliance with
+# the License.  You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+name: Simple CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: ${{ github.repository }}-${{ github.head_ref || github.sha }}-${{ github.workflow }}
+  cancel-in-progress: true
+
+env:
+  MVN_CMD: 'build/mvn -ntp'
+
+jobs:
+
+  scala-format-check:
+    name: Scala Code Format Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Check Scala code formatting
+        run: ./dev/format-scala-code.sh check
+
+  maven-compile:
+    name: Maven Compile (JVM Modules)
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '8', '17' ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Compile core modules
+        run: |
+          ${{ env.MVN_CMD }} compile test-compile \
+            -pl gluten-ras/common,gluten-ras/planner,shims/common,gluten-core,gluten-substrait \
+            -am \
+            -DskipTests
+
+  unit-tests-gluten-core:
+    name: Unit Tests - gluten-core (JDK ${{ matrix.java }})
+    needs: maven-compile
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '8', '17' ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Run gluten-core unit tests
+        run: |
+          ${{ env.MVN_CMD }} test \
+            -pl gluten-core \
+            -am
+
+  unit-tests-gluten-ras:
+    name: Unit Tests - gluten-ras (JDK ${{ matrix.java }})
+    needs: maven-compile
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '8', '17' ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Run gluten-ras unit tests
+        run: |
+          ${{ env.MVN_CMD }} test \
+            -pl gluten-ras/common \
+            -am
+
+  unit-tests-gluten-substrait:
+    name: Unit Tests - gluten-substrait (JDK ${{ matrix.java }})
+    needs: maven-compile
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        java: [ '8', '17' ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up JDK ${{ matrix.java }}
+        uses: actions/setup-java@v4
+        with:
+          java-version: ${{ matrix.java }}
+          distribution: 'temurin'
+          cache: 'maven'
+      - name: Run gluten-substrait unit tests
+        run: |
+          ${{ env.MVN_CMD }} test \
+            -pl gluten-substrait \
+            -am
