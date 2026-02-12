@@ -111,3 +111,31 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, makeYMInterval) {
+  auto result = evaluate<SimpleVector<int32_t>>(
+      "make_ym_interval(c0, c1)",
+      makeRowVector({makeFlatVector<int32_t>({1, 0, -1, 2, 0}), makeFlatVector<int32_t>({1, 0, 1, 6, -3})}));
+  ASSERT_EQ(result->size(), 5);
+  ASSERT_EQ(result->valueAt(0), 13);
+  ASSERT_EQ(result->valueAt(1), 0);
+  ASSERT_EQ(result->valueAt(2), -11);
+  ASSERT_EQ(result->valueAt(3), 30);
+  ASSERT_EQ(result->valueAt(4), -3);
+}
+
+TEST_F(SparkFunctionTest, makeYMIntervalOverflow) {
+  auto years = makeFlatVector<int32_t>({178956970});
+  auto months = makeFlatVector<int32_t>({8});
+  auto result = evaluate<SimpleVector<int32_t>>("make_ym_interval(c0, c1)", makeRowVector({years, months}));
+  ASSERT_EQ(result->size(), 1);
+  ASSERT_TRUE(result->isNullAt(0));
+}
+
+TEST_F(SparkFunctionTest, makeYMIntervalNegativeOverflow) {
+  auto years = makeFlatVector<int32_t>({-178956971});
+  auto months = makeFlatVector<int32_t>({0});
+  auto result = evaluate<SimpleVector<int32_t>>("make_ym_interval(c0, c1)", makeRowVector({years, months}));
+  ASSERT_EQ(result->size(), 1);
+  ASSERT_TRUE(result->isNullAt(0));
+}
