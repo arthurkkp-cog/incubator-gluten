@@ -111,3 +111,28 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, monthsBetween) {
+  auto timestamps1 = makeFlatVector<Timestamp>(
+      {Timestamp(857125800, 0),
+       Timestamp(857125800, 0),
+       Timestamp(1422618720, 0),
+       Timestamp(1422662400, 0),
+       Timestamp(1427839200, 0)});
+  auto timestamps2 = makeFlatVector<Timestamp>(
+      {Timestamp(846633600, 0),
+       Timestamp(846633600, 0),
+       Timestamp(1422618600, 0),
+       Timestamp(1427839200, 0),
+       Timestamp(1425081600, 0)});
+  auto roundOff = makeFlatVector<bool>({true, false, true, true, true});
+
+  auto result = evaluate<SimpleVector<double>>(
+      "months_between(c0, c1, c2)", makeRowVector({timestamps1, timestamps2, roundOff}));
+
+  ASSERT_NEAR(result->valueAt(0), 3.94959677, 1e-8);
+  ASSERT_NEAR(result->valueAt(1), 3.9495967741935485, 1e-15);
+  ASSERT_EQ(result->valueAt(2), 0.0);
+  ASSERT_EQ(result->valueAt(3), -2.0);
+  ASSERT_EQ(result->valueAt(4), 1.0);
+}
