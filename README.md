@@ -164,7 +164,8 @@ Gluten is licensed under [Apache License Version 2.0](https://www.apache.org/lic
 
 ## 10. Acknowledgements
 
-Gluten was initiated by Intel and Kyligence in 2022. Several other companies are also actively contributing to its development, including BIGO, Meituan, Alibaba Cloud, NetEase, Baidu, Microsoft, IBM, Google, etc.
+<!-- Dummy test comment for PR verification -->
+Gluten was initiated by Intel and Kyligence in 2022.Several other companies are also actively contributing to its development, including BIGO, Meituan, Alibaba Cloud, NetEase, Baidu, Microsoft, IBM, Google, etc.
 
 <a href="https://github.com/apache/incubator-gluten/graphs/contributors">
   <img src="https://contrib.rocks/image?repo=apache/incubator-gluten&columns=25" />
