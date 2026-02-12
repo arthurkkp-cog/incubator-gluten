@@ -103,6 +103,36 @@ TEST_F(SparkFunctionTest, round) {
   runRoundTest<int8_t>(testRoundIntegralData<int8_t>());
 }
 
+TEST_F(SparkFunctionTest, cot) {
+  const auto cotDouble = [&](std::optional<double> a) {
+    return evaluateOnce<double>("cot(c0)", a);
+  };
+  ASSERT_EQ(cotDouble(0.0), std::numeric_limits<double>::infinity());
+  ASSERT_DOUBLE_EQ(cotDouble(1.0).value(), 1.0 / std::tan(1.0));
+  ASSERT_DOUBLE_EQ(cotDouble(-1.0).value(), 1.0 / std::tan(-1.0));
+  ASSERT_DOUBLE_EQ(cotDouble(M_PI / 4).value(), 1.0 / std::tan(M_PI / 4));
+  ASSERT_DOUBLE_EQ(cotDouble(M_PI / 2).value(), 1.0 / std::tan(M_PI / 2));
+  ASSERT_TRUE(std::isnan(cotDouble(std::numeric_limits<double>::quiet_NaN()).value()));
+  ASSERT_TRUE(std::isnan(cotDouble(std::numeric_limits<double>::infinity()).value()));
+  ASSERT_TRUE(std::isnan(cotDouble(-std::numeric_limits<double>::infinity()).value()));
+  ASSERT_EQ(cotDouble(std::nullopt), std::nullopt);
+
+  const auto cotFloat = [&](std::optional<float> a) {
+    return evaluateOnce<double, float>("cot(c0)", a);
+  };
+  ASSERT_DOUBLE_EQ(cotFloat(1.0f).value(), 1.0 / std::tan(1.0f));
+  ASSERT_DOUBLE_EQ(cotFloat(-1.0f).value(), 1.0 / std::tan(-1.0f));
+  ASSERT_EQ(cotFloat(std::nullopt), std::nullopt);
+
+  const auto cotInt = [&](std::optional<int32_t> a) {
+    return evaluateOnce<double, int32_t>("cot(c0)", a);
+  };
+  ASSERT_EQ(cotInt(0), std::numeric_limits<double>::infinity());
+  ASSERT_DOUBLE_EQ(cotInt(1).value(), 1.0 / std::tan(1.0));
+  ASSERT_DOUBLE_EQ(cotInt(-1).value(), 1.0 / std::tan(-1.0));
+  ASSERT_EQ(cotInt(std::nullopt), std::nullopt);
+}
+
 TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<float>(testRoundWithDecFloatAndDoubleData<float>());
   runRoundWithDecimalTest<double>(testRoundWithDecFloatAndDoubleData<double>());
