@@ -38,19 +38,19 @@ struct RandnFunction {
   }
 
   FOLLY_ALWAYS_INLINE void call(double& result) {
-    std::normal_distribution<double> dist(0.0, 1.0);
-    result = dist(defaultGenerator_);
+    result = defaultDist_(defaultGenerator_);
   }
 
   template <typename TInput>
   FOLLY_ALWAYS_INLINE void callNullable(double& result, TInput /*seedInput*/) {
-    std::normal_distribution<double> dist(0.0, 1.0);
-    result = dist(generator_);
+    result = dist_(generator_);
   }
 
  private:
   std::mt19937 generator_;
   std::mt19937 defaultGenerator_{std::random_device{}()};
+  std::normal_distribution<double> dist_{0.0, 1.0};
+  std::normal_distribution<double> defaultDist_{0.0, 1.0};
 };
 
 } // namespace gluten

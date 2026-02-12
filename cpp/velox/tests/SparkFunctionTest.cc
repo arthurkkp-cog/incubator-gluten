@@ -16,7 +16,6 @@
  */
 
 #include <cmath>
-#include <numeric>
 #include <vector>
 
 #include "operators/functions/RegistrationAllFunctions.h"
