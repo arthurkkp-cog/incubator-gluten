@@ -94,6 +94,65 @@ class SparkFunctionTest : public SparkFunctionBaseTest {
   }
 };
 
+TEST_F(SparkFunctionTest, formatNumber) {
+  auto testFormatNumber = [&](double value, int32_t decimals, const std::string& expected) {
+    auto result = evaluate<SimpleVector<StringView>>(
+        "format_number(c0, c1)",
+        makeRowVector({makeFlatVector<double>({value}), makeFlatVector<int32_t>({decimals})}));
+    ASSERT_EQ(result->valueAt(0).str(), expected);
+  };
+
+  testFormatNumber(12332.123456, 4, "12,332.1235");
+  testFormatNumber(12332.123456, 0, "12,332");
+  testFormatNumber(12332.123456, 2, "12,332.12");
+
+  testFormatNumber(0.0, 2, "0.00");
+  testFormatNumber(-0.0, 2, "0.00");
+  testFormatNumber(1.0, 0, "1");
+  testFormatNumber(-1.0, 0, "-1");
+  testFormatNumber(1234567.0, 0, "1,234,567");
+  testFormatNumber(-1234567.0, 0, "-1,234,567");
+
+  testFormatNumber(1234567890.0, 2, "1,234,567,890.00");
+  testFormatNumber(0.5, 0, "0");
+  testFormatNumber(1.5, 0, "2");
+  testFormatNumber(100.0, 5, "100.00000");
+  testFormatNumber(99.99, 1, "100.0");
+
+  testFormatNumber(12332.123456, -1, "12,332");
+
+  testFormatNumber(std::numeric_limits<double>::infinity(), 2, "Infinity");
+  testFormatNumber(-std::numeric_limits<double>::infinity(), 2, "-Infinity");
+  testFormatNumber(std::numeric_limits<double>::quiet_NaN(), 2, "NaN");
+}
+
+TEST_F(SparkFunctionTest, formatNumberIntTypes) {
+  auto resultInt64 = evaluate<SimpleVector<StringView>>(
+      "format_number(c0, c1)",
+      makeRowVector({makeFlatVector<int64_t>({1234567}), makeFlatVector<int32_t>({2})}));
+  ASSERT_EQ(resultInt64->valueAt(0).str(), "1,234,567.00");
+
+  auto resultInt32 = evaluate<SimpleVector<StringView>>(
+      "format_number(c0, c1)",
+      makeRowVector({makeFlatVector<int32_t>({-12345}), makeFlatVector<int32_t>({0})}));
+  ASSERT_EQ(resultInt32->valueAt(0).str(), "-12,345");
+
+  auto resultInt16 = evaluate<SimpleVector<StringView>>(
+      "format_number(c0, c1)",
+      makeRowVector({makeFlatVector<int16_t>({1000}), makeFlatVector<int32_t>({1})}));
+  ASSERT_EQ(resultInt16->valueAt(0).str(), "1,000.0");
+
+  auto resultInt8 = evaluate<SimpleVector<StringView>>(
+      "format_number(c0, c1)",
+      makeRowVector({makeFlatVector<int8_t>({42}), makeFlatVector<int32_t>({3})}));
+  ASSERT_EQ(resultInt8->valueAt(0).str(), "42.000");
+
+  auto resultFloat = evaluate<SimpleVector<StringView>>(
+      "format_number(c0, c1)",
+      makeRowVector({makeFlatVector<float>({12345.6f}), makeFlatVector<int32_t>({2})}));
+  ASSERT_EQ(resultFloat->valueAt(0).str(), "12,345.60");
+}
+
 TEST_F(SparkFunctionTest, round) {
   runRoundTest<float>(testRoundFloatData<float>());
   runRoundTest<double>(testRoundFloatData<double>());
