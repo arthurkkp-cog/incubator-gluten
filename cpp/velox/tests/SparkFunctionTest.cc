@@ -111,3 +111,38 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, trunc) {
+  const auto trunc = [&](std::optional<int32_t> date,
+                         const std::string& format) {
+    return evaluateOnce<int32_t>(
+        fmt::format("trunc(c0, '{}')", format), DATE(), date);
+  };
+
+  EXPECT_EQ(std::nullopt, trunc(0, ""));
+  EXPECT_EQ(std::nullopt, trunc(0, "day"));
+  EXPECT_EQ(std::nullopt, trunc(0, "hour"));
+  EXPECT_EQ(std::nullopt, trunc(0, "minute"));
+  EXPECT_EQ(std::nullopt, trunc(0, "second"));
+  EXPECT_EQ(std::nullopt, trunc(0, "millisecond"));
+  EXPECT_EQ(std::nullopt, trunc(0, "microsecond"));
+
+  EXPECT_EQ(std::nullopt, trunc(std::nullopt, "year"));
+
+  EXPECT_EQ(0, trunc(0, "week"));
+  EXPECT_EQ(0, trunc(0, "month"));
+  EXPECT_EQ(0, trunc(0, "year"));
+
+  EXPECT_EQ(19576, trunc(19576, "week"));
+  EXPECT_EQ(19576, trunc(19579, "week"));
+
+  EXPECT_EQ(18293, trunc(18297, "month"));
+  EXPECT_EQ(18293, trunc(18297, "mon"));
+  EXPECT_EQ(18293, trunc(18297, "mm"));
+
+  EXPECT_EQ(18262, trunc(18297, "quarter"));
+
+  EXPECT_EQ(18262, trunc(18297, "year"));
+  EXPECT_EQ(18262, trunc(18297, "yyyy"));
+  EXPECT_EQ(18262, trunc(18297, "yy"));
+}
