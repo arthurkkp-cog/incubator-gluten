@@ -57,7 +57,15 @@ void registerFunctionOverwrite() {
   velox::registerFunction<RoundFunction, double, double, int32_t>({"round"});
   velox::registerFunction<RoundFunction, float, float, int32_t>({"round"});
 
-  auto kRowConstructorWithNull = RowConstructorWithNullCallToSpecialForm::kRowConstructorWithNull;
+  velox::functions::registerUnaryNumeric<BRoundFunction>({"bround"});
+  velox::registerFunction<BRoundFunction, int8_t, int8_t, int32_t>({"bround"});
+  velox::registerFunction<BRoundFunction, int16_t, int16_t, int32_t>({"bround"});
+  velox::registerFunction<BRoundFunction, int32_t, int32_t, int32_t>({"bround"});
+  velox::registerFunction<BRoundFunction, int64_t, int64_t, int32_t>({"bround"});
+  velox::registerFunction<BRoundFunction, double, double, int32_t>({"bround"});
+  velox::registerFunction<BRoundFunction, float, float, int32_t>({"bround"});
+
+  auto kRowConstructorWithNull= RowConstructorWithNullCallToSpecialForm::kRowConstructorWithNull;
   velox::exec::registerVectorFunction(
       kRowConstructorWithNull,
       std::vector<std::shared_ptr<velox::exec::FunctionSignature>>{},

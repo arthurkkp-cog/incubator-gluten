@@ -63,4 +63,30 @@ struct RoundFunction {
     result = round(a, b);
   }
 };
+template <typename T>
+struct BRoundFunction {
+  template <typename TNum, typename TDecimals, bool alwaysRoundNegDec = true>
+  FOLLY_ALWAYS_INLINE TNum bround(const TNum& number, const TDecimals& decimals = 0) {
+    static_assert(!std::is_same_v<TNum, bool> && "bround not supported for bool");
+
+    if constexpr (std::is_integral_v<TNum>) {
+      if constexpr (alwaysRoundNegDec) {
+        if (decimals >= 0)
+          return number;
+      } else {
+        return number;
+      }
+    }
+    if (!std::isfinite(number)) {
+      return number;
+    }
+
+    long double factor = std::pow(10.0L, static_cast<long double>(decimals));
+    return static_cast<TNum>(std::nearbyint(static_cast<long double>(number) * factor) / factor);
+  }
+  template <typename TInput>
+  FOLLY_ALWAYS_INLINE void call(TInput& result, const TInput& a, const int32_t b = 0) {
+    result = bround(a, b);
+  }
+};
 } // namespace gluten
