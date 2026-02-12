@@ -23,7 +23,7 @@ import org.apache.spark.SparkConf
 import org.apache.spark.sql.execution.ProjectExec
 import org.apache.spark.sql.types.Decimal
 
-import java.sql.Timestamp
+import java.sql.{Date, Timestamp}
 
 class DateFunctionsValidateSuiteRasOff extends DateFunctionsValidateSuite {
   override protected def sparkConf: SparkConf = {
@@ -484,6 +484,28 @@ abstract class DateFunctionsValidateSuite extends FunctionsValidateSuite {
 
         // Test unix_timestamp(timestamp, format) - should use native execution without fallback
         runQueryAndCompare("SELECT unix_timestamp(ts, fmt) FROM unix_timestamp_test") {
+          checkGlutenPlan[ProjectExecTransformer]
+        }
+    }
+  }
+
+  test("unix_timestamp with date type - no fallback") {
+    withTempPath {
+      path =>
+        Seq(
+          Date.valueOf("2016-04-08"),
+          Date.valueOf("2017-05-19"),
+          Date.valueOf("1970-01-01")
+        ).toDF("dt").write.parquet(path.getCanonicalPath)
+
+        spark.read
+          .parquet(path.getCanonicalPath)
+          .createOrReplaceTempView("unix_timestamp_date_test")
+
+        runQueryAndCompare("SELECT unix_timestamp(dt) FROM unix_timestamp_date_test") {
+          checkGlutenPlan[ProjectExecTransformer]
+        }
+        runQueryAndCompare("SELECT to_unix_timestamp(dt) FROM unix_timestamp_date_test") {
           checkGlutenPlan[ProjectExecTransformer]
         }
     }
