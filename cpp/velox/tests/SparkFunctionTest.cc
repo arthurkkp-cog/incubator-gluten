@@ -19,6 +19,7 @@
 
 #include "operators/functions/RegistrationAllFunctions.h"
 #include "velox/functions/sparksql/tests/SparkFunctionBaseTest.h"
+#include "velox/type/Timestamp.h"
 
 using namespace facebook::velox::functions::sparksql::test;
 using namespace facebook::velox;
@@ -30,6 +31,13 @@ class SparkFunctionTest : public SparkFunctionBaseTest {
   }
 
  protected:
+  void setQueryTimeZone(const std::string& timeZone) {
+    queryCtx_->testingOverrideConfigUnsafe({
+        {core::QueryConfig::kSessionTimezone, timeZone},
+        {core::QueryConfig::kAdjustTimestampToTimezone, "true"},
+    });
+  }
+
   template <typename T>
   void runRoundTest(const std::vector<std::tuple<T, T>>& data) {
     auto result = evaluate<SimpleVector<T>>("round(c0)", makeRowVector({makeFlatVector<T, 0>(data)}));
@@ -110,4 +118,17 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int32_t>(testRoundWithDecIntegralData<int32_t>());
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
+}
+
+TEST_F(SparkFunctionTest, toUnixTimestampDate) {
+  const auto toUnixTimestamp = [&](std::optional<int32_t> date) {
+    return evaluateOnce<int64_t>("to_unix_timestamp(c0)", {DATE()}, date);
+  };
+  EXPECT_EQ(0, toUnixTimestamp(parseDate("1970-01-01")));
+  EXPECT_EQ(1727740800, toUnixTimestamp(parseDate("2024-10-01")));
+  EXPECT_EQ(std::nullopt, toUnixTimestamp(std::nullopt));
+
+  setQueryTimeZone("America/Los_Angeles");
+  EXPECT_EQ(1727766000, toUnixTimestamp(parseDate("2024-10-01")));
+  EXPECT_EQ(2398320000, toUnixTimestamp(parseDate("2045-12-31")));
 }
