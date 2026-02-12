@@ -111,3 +111,47 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, makeDTInterval) {
+  static constexpr int64_t kMicrosPerSecond = 1000000L;
+  static constexpr int64_t kMicrosPerMinute = kMicrosPerSecond * 60;
+  static constexpr int64_t kMicrosPerHour = kMicrosPerMinute * 60;
+  static constexpr int64_t kMicrosPerDay = kMicrosPerHour * 24;
+
+  auto result0 = evaluate<SimpleVector<int64_t>>("make_dt_interval()", makeRowVector(ROW({}), 1));
+  ASSERT_EQ(result0->valueAt(0), 0);
+
+  auto result1 = evaluate<SimpleVector<int64_t>>(
+      "make_dt_interval(c0)", makeRowVector({makeFlatVector<int32_t>({1, 2, -1})}));
+  ASSERT_EQ(result1->valueAt(0), 1 * kMicrosPerDay);
+  ASSERT_EQ(result1->valueAt(1), 2 * kMicrosPerDay);
+  ASSERT_EQ(result1->valueAt(2), -1 * kMicrosPerDay);
+
+  auto result2 = evaluate<SimpleVector<int64_t>>(
+      "make_dt_interval(c0, c1)", makeRowVector({makeFlatVector<int32_t>({1, 0}), makeFlatVector<int32_t>({2, 5})}));
+  ASSERT_EQ(result2->valueAt(0), 1 * kMicrosPerDay + 2 * kMicrosPerHour);
+  ASSERT_EQ(result2->valueAt(1), 5 * kMicrosPerHour);
+
+  auto result3 = evaluate<SimpleVector<int64_t>>(
+      "make_dt_interval(c0, c1, c2)",
+      makeRowVector({makeFlatVector<int32_t>({1}), makeFlatVector<int32_t>({2}), makeFlatVector<int32_t>({30})}));
+  ASSERT_EQ(result3->valueAt(0), 1 * kMicrosPerDay + 2 * kMicrosPerHour + 30 * kMicrosPerMinute);
+
+  auto result4 = evaluate<SimpleVector<int64_t>>(
+      "make_dt_interval(c0, c1, c2, c3)",
+      makeRowVector(
+          {makeFlatVector<int32_t>({1}),
+           makeFlatVector<int32_t>({2}),
+           makeFlatVector<int32_t>({30}),
+           makeFlatVector<int64_t>({45})}));
+  ASSERT_EQ(result4->valueAt(0), 1 * kMicrosPerDay + 2 * kMicrosPerHour + 30 * kMicrosPerMinute + 45 * kMicrosPerSecond);
+
+  auto result5 = evaluate<SimpleVector<int64_t>>(
+      "make_dt_interval(c0, c1, c2, c3)",
+      makeRowVector(
+          {makeFlatVector<int32_t>({0}),
+           makeFlatVector<int32_t>({0}),
+           makeFlatVector<int32_t>({0}),
+           makeFlatVector<double>({1.5})}));
+  ASSERT_EQ(result5->valueAt(0), static_cast<int64_t>(1.5 * kMicrosPerSecond));
+}
