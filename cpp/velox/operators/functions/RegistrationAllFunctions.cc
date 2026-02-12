@@ -19,6 +19,7 @@
 #include "operators/functions/Arithmetic.h"
 #include "operators/functions/RowConstructorWithNull.h"
 #include "operators/functions/RowFunctionWithNull.h"
+#include "operators/functions/StringFunctions.h"
 #include "velox/expression/SpecialFormRegistry.h"
 #include "velox/expression/VectorFunction.h"
 #include "velox/functions/iceberg/Register.h"
@@ -75,6 +76,8 @@ void registerFunctionOverwrite() {
   velox::exec::registerFunctionCallToSpecialForm(
       kRowConstructorWithAllNull,
       std::make_unique<RowConstructorWithNullCallToSpecialForm>(kRowConstructorWithAllNull));
+
+  velox::registerFunction<SpaceFunction, facebook::velox::Varchar, int32_t>({"space"});
 
   velox::functions::registerPrestoVectorFunctions();
 }

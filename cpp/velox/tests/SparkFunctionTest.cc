@@ -111,3 +111,15 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, space) {
+  const auto space = [&](std::optional<int32_t> n) { return evaluateOnce<std::string>("space(c0)", n); };
+
+  ASSERT_EQ(space(0), "");
+  ASSERT_EQ(space(1), " ");
+  ASSERT_EQ(space(5), "     ");
+  ASSERT_EQ(space(10), "          ");
+  ASSERT_EQ(space(-1), "");
+  ASSERT_EQ(space(-100), "");
+  ASSERT_EQ(space(std::nullopt), std::nullopt);
+}
