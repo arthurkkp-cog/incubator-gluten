@@ -15,6 +15,7 @@
  * limitations under the License.
  */
 
+#include <cmath>
 #include <vector>
 
 #include "operators/functions/RegistrationAllFunctions.h"
@@ -110,4 +111,42 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int32_t>(testRoundWithDecIntegralData<int32_t>());
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
+}
+
+TEST_F(SparkFunctionTest, randnReturnsFiniteValues) {
+  auto rowVector = makeRowVector(ROW({}), 100);
+  auto result = evaluate<SimpleVector<double>>("randn()", rowVector);
+  for (int32_t i = 0; i < 100; ++i) {
+    ASSERT_FALSE(result->isNullAt(i));
+    ASSERT_TRUE(std::isfinite(result->valueAt(i)));
+  }
+}
+
+TEST_F(SparkFunctionTest, randnWithSeedIsDeterministic) {
+  auto input = makeRowVector(makeRowType(ROW({"c0"}, {INTEGER()})), 10);
+  auto result1 = evaluate<SimpleVector<double>>("randn(42)", input);
+  auto result2 = evaluate<SimpleVector<double>>("randn(42)", input);
+  for (int32_t i = 0; i < 10; ++i) {
+    ASSERT_EQ(result1->valueAt(i), result2->valueAt(i));
+  }
+}
+
+TEST_F(SparkFunctionTest, randnStatisticalProperties) {
+  auto rowVector = makeRowVector(makeRowType(ROW({"c0"}, {INTEGER()})), 10000);
+  auto result = evaluate<SimpleVector<double>>("randn(12345)", rowVector);
+
+  double sum = 0.0;
+  for (int32_t i = 0; i < 10000; ++i) {
+    sum += result->valueAt(i);
+  }
+  double mean = sum / 10000.0;
+  ASSERT_NEAR(mean, 0.0, 0.1);
+
+  double sqSum = 0.0;
+  for (int32_t i = 0; i < 10000; ++i) {
+    double diff = result->valueAt(i) - mean;
+    sqSum += diff * diff;
+  }
+  double stddev = std::sqrt(sqSum / 10000.0);
+  ASSERT_NEAR(stddev, 1.0, 0.1);
 }
