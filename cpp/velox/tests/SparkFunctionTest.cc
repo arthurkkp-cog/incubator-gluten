@@ -111,3 +111,21 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, initcap) {
+  const auto initcap = [&](std::optional<std::string> input) {
+    return evaluateOnce<std::string>("initcap(c0)", input);
+  };
+
+  ASSERT_EQ(initcap("hello world"), "Hello World");
+  ASSERT_EQ(initcap("hello"), "Hello");
+  ASSERT_EQ(initcap("HELLO WORLD"), "Hello World");
+  ASSERT_EQ(initcap("hELLO wORLD"), "Hello World");
+  ASSERT_EQ(initcap("a b c"), "A B C");
+  ASSERT_EQ(initcap(""), "");
+  ASSERT_EQ(initcap("a"), "A");
+  ASSERT_EQ(initcap("123 abc"), "123 Abc");
+  ASSERT_EQ(initcap("hello  world"), "Hello  World");
+  ASSERT_EQ(initcap(" hello world "), " Hello World ");
+  ASSERT_EQ(initcap(std::nullopt), std::nullopt);
+}
