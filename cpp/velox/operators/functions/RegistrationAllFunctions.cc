@@ -17,6 +17,7 @@
 #include "operators/functions/RegistrationAllFunctions.h"
 
 #include "operators/functions/Arithmetic.h"
+#include "operators/functions/Soundex.h"
 #include "operators/functions/RowConstructorWithNull.h"
 #include "operators/functions/RowFunctionWithNull.h"
 #include "velox/expression/SpecialFormRegistry.h"
@@ -77,6 +78,8 @@ void registerFunctionOverwrite() {
       std::make_unique<RowConstructorWithNullCallToSpecialForm>(kRowConstructorWithAllNull));
 
   velox::functions::registerPrestoVectorFunctions();
+
+  velox::registerFunction<SoundexFunction, velox::Varchar, velox::Varchar>({"soundex"});
 }
 
 } // namespace

@@ -111,3 +111,46 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, soundex) {
+  auto runSoundexTest =
+      [&](const std::vector<std::pair<std::string, std::string>>& data) {
+        std::vector<StringView> inputs;
+        inputs.reserve(data.size());
+        for (const auto& [input, _] : data) {
+          inputs.emplace_back(StringView(input));
+        }
+        auto result = evaluate<FlatVector<StringView>>(
+            "soundex(c0)", makeRowVector({makeFlatVector(inputs)}));
+        for (int32_t i = 0; i < data.size(); ++i) {
+          ASSERT_EQ(result->valueAt(i).str(), data[i].second)
+              << "Input: " << data[i].first;
+        }
+      };
+
+  runSoundexTest({
+      {"Robert", "R163"},
+      {"Rupert", "R163"},
+      {"Ashcraft", "A261"},
+      {"Tymczak", "T520"},
+      {"Honeyman", "H555"},
+      {"Smith", "S530"},
+      {"Lee", "L000"},
+      {"a", "A000"},
+      {"Z", "Z000"},
+      {"hello", "H400"},
+      {"world", "W640"},
+  });
+
+  runSoundexTest({
+      {"", ""},
+      {"123", "123"},
+      {"!@#", "!@#"},
+  });
+
+  runSoundexTest({
+      {"AEIOU", "A000"},
+      {"Bbbb", "B000"},
+      {"AaBbCc", "A120"},
+  });
+}
