@@ -63,4 +63,14 @@ struct RoundFunction {
     result = round(a, b);
   }
 };
+
+/// Radians function - converts degrees to radians
+/// radians(x) = x * (π / 180)
+template <typename T>
+struct RadiansFunction {
+  FOLLY_ALWAYS_INLINE void call(T& result, const T& degrees) {
+    static constexpr T kDegreesToRadians = M_PI / 180.0;
+    result = degrees * kDegreesToRadians;
+  }
+};
 } // namespace gluten
