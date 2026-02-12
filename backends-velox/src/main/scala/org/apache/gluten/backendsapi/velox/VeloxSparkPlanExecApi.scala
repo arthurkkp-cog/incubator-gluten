@@ -963,6 +963,21 @@ class VeloxSparkPlanExecApi extends SparkPlanExecApi {
     )
   }
 
+  override def extraExpressionConverter(
+      substraitExprName: String,
+      expr: Expression,
+      attributeSeq: Seq[Attribute]): Option[ExpressionTransformer] = {
+    if (substraitExprName == ExpressionNames.TO_PRETTY_STRING) {
+      val child = expr.children.head
+      val timeZoneId = expr.asInstanceOf[TimeZoneAwareExpression].timeZoneId
+      val cast = Cast(child, StringType, timeZoneId)
+      val coalesce = Coalesce(Seq(cast, Literal("NULL")))
+      Some(ExpressionConverter.replaceWithExpressionTransformer(coalesce, attributeSeq))
+    } else {
+      None
+    }
+  }
+
   override def rewriteSpillPath(path: String): String = {
     val fs = VeloxConfig.get.veloxSpillFileSystem
     fs match {

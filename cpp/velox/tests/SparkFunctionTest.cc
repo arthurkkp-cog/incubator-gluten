@@ -94,6 +94,37 @@ class SparkFunctionTest : public SparkFunctionBaseTest {
   }
 };
 
+TEST_F(SparkFunctionTest, toPrettyString) {
+  auto intVector = makeNullableFlatVector<int32_t>({1, std::nullopt, -42, 0});
+  auto result = evaluate<SimpleVector<StringView>>(
+      "coalesce(cast(c0 as varchar), 'NULL')", makeRowVector({intVector}));
+  ASSERT_EQ(result->valueAt(0).getString(), "1");
+  ASSERT_EQ(result->valueAt(1).getString(), "NULL");
+  ASSERT_EQ(result->valueAt(2).getString(), "-42");
+  ASSERT_EQ(result->valueAt(3).getString(), "0");
+
+  auto doubleVector = makeNullableFlatVector<double>({1.5, std::nullopt, -3.14});
+  result = evaluate<SimpleVector<StringView>>(
+      "coalesce(cast(c0 as varchar), 'NULL')", makeRowVector({doubleVector}));
+  ASSERT_EQ(result->valueAt(0).getString(), "1.5");
+  ASSERT_EQ(result->valueAt(1).getString(), "NULL");
+  ASSERT_EQ(result->valueAt(2).getString(), "-3.14");
+
+  auto stringVector = makeNullableFlatVector<StringView>({"hello"_sv, std::nullopt, ""_sv});
+  result = evaluate<SimpleVector<StringView>>(
+      "coalesce(cast(c0 as varchar), 'NULL')", makeRowVector({stringVector}));
+  ASSERT_EQ(result->valueAt(0).getString(), "hello");
+  ASSERT_EQ(result->valueAt(1).getString(), "NULL");
+  ASSERT_EQ(result->valueAt(2).getString(), "");
+
+  auto boolVector = makeNullableFlatVector<bool>({true, false, std::nullopt});
+  result = evaluate<SimpleVector<StringView>>(
+      "coalesce(cast(c0 as varchar), 'NULL')", makeRowVector({boolVector}));
+  ASSERT_EQ(result->valueAt(0).getString(), "true");
+  ASSERT_EQ(result->valueAt(1).getString(), "false");
+  ASSERT_EQ(result->valueAt(2).getString(), "NULL");
+}
+
 TEST_F(SparkFunctionTest, round) {
   runRoundTest<float>(testRoundFloatData<float>());
   runRoundTest<double>(testRoundFloatData<double>());

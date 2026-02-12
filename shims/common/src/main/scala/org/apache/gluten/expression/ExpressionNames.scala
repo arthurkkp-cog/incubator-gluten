@@ -387,4 +387,6 @@ object ExpressionNames {
   final val HOURS = "hours"
   final val BUCKET = "bucket"
   final val TRUNCATE = "truncate"
+
+  final val TO_PRETTY_STRING = "toprettystring"
 }
