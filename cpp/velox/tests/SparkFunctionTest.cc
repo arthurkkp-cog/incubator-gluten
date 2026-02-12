@@ -111,3 +111,24 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, empty2null) {
+  auto input = makeNullableFlatVector<StringView>(
+      {"hello"_sv, ""_sv, "world"_sv, std::nullopt, " "_sv, ""_sv});
+  auto result = evaluate<SimpleVector<StringView>>("empty2null(c0)", makeRowVector({input}));
+
+  ASSERT_FALSE(result->isNullAt(0));
+  ASSERT_EQ(result->valueAt(0), StringView("hello"));
+
+  ASSERT_TRUE(result->isNullAt(1));
+
+  ASSERT_FALSE(result->isNullAt(2));
+  ASSERT_EQ(result->valueAt(2), StringView("world"));
+
+  ASSERT_TRUE(result->isNullAt(3));
+
+  ASSERT_FALSE(result->isNullAt(4));
+  ASSERT_EQ(result->valueAt(4), StringView(" "));
+
+  ASSERT_TRUE(result->isNullAt(5));
+}
