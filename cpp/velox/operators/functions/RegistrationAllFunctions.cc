@@ -17,6 +17,7 @@
 #include "operators/functions/RegistrationAllFunctions.h"
 
 #include "operators/functions/Arithmetic.h"
+#include "operators/functions/StringFunctions.h"
 #include "operators/functions/RowConstructorWithNull.h"
 #include "operators/functions/RowFunctionWithNull.h"
 #include "velox/expression/SpecialFormRegistry.h"
@@ -75,6 +76,8 @@ void registerFunctionOverwrite() {
   velox::exec::registerFunctionCallToSpecialForm(
       kRowConstructorWithAllNull,
       std::make_unique<RowConstructorWithNullCallToSpecialForm>(kRowConstructorWithAllNull));
+
+  velox::registerFunction<Empty2NullFunction, velox::Varchar, velox::Varchar>({"empty2null"});
 
   velox::functions::registerPrestoVectorFunctions();
 }
