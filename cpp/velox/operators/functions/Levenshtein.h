@@ -19,6 +19,7 @@
 #include <folly/CPortability.h>
 #include <algorithm>
 #include <cstdint>
+#include <limits>
 #include <vector>
 
 #include "velox/functions/Macros.h"
@@ -29,22 +30,21 @@ template <typename T>
 struct LevenshteinFunction {
   VELOX_DEFINE_FUNCTION_TYPES(T);
 
-  FOLLY_ALWAYS_INLINE void
-  call(int32_t& result, const arg_type<velox::Varchar>& left, const arg_type<velox::Varchar>& right) {
-    result = computeDistance(left.data(), left.size(), right.data(), right.size());
-  }
-
   FOLLY_ALWAYS_INLINE void call(
       int32_t& result,
-      const arg_type<velox::Varchar>& left,
-      const arg_type<velox::Varchar>& right,
-      const int32_t& threshold) {
+      const arg_type<facebook::velox::Varchar>& left,
+      const arg_type<facebook::velox::Varchar>& right,
+      const int32_t& threshold = std::numeric_limits<int32_t>::max()) {
     if (threshold < 0) {
       result = -1;
       return;
     }
     int32_t distance = computeDistance(left.data(), left.size(), right.data(), right.size());
-    result = (distance > threshold) ? -1 : distance;
+    if (threshold != std::numeric_limits<int32_t>::max() && distance > threshold) {
+      result = -1;
+    } else {
+      result = distance;
+    }
   }
 
  private:
