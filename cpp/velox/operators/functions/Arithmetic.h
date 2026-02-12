@@ -63,4 +63,10 @@ struct RoundFunction {
     result = round(a, b);
   }
 };
+template <typename T>
+struct Expm1Function {
+  FOLLY_ALWAYS_INLINE void call(double& result, const double& a) {
+    result = std::expm1(a);
+  }
+};
 } // namespace gluten

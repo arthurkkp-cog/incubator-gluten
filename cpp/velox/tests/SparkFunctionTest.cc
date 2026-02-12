@@ -94,6 +94,25 @@ class SparkFunctionTest : public SparkFunctionBaseTest {
   }
 };
 
+TEST_F(SparkFunctionTest, expm1) {
+  const auto expm1Double = [&](std::optional<double> a) {
+    return evaluateOnce<double>("expm1(c0)", a);
+  };
+
+  ASSERT_EQ(expm1Double(0.0), 0.0);
+  ASSERT_DOUBLE_EQ(expm1Double(1.0).value(), std::expm1(1.0));
+  ASSERT_DOUBLE_EQ(expm1Double(-1.0).value(), std::expm1(-1.0));
+  ASSERT_DOUBLE_EQ(expm1Double(2.0).value(), std::expm1(2.0));
+  ASSERT_DOUBLE_EQ(expm1Double(0.5).value(), std::expm1(0.5));
+  ASSERT_DOUBLE_EQ(expm1Double(-0.5).value(), std::expm1(-0.5));
+
+  ASSERT_TRUE(std::isinf(expm1Double(std::numeric_limits<double>::infinity()).value()));
+  ASSERT_DOUBLE_EQ(expm1Double(-std::numeric_limits<double>::infinity()).value(), -1.0);
+  ASSERT_TRUE(std::isnan(expm1Double(std::numeric_limits<double>::quiet_NaN()).value()));
+
+  ASSERT_EQ(expm1Double(std::nullopt), std::nullopt);
+}
+
 TEST_F(SparkFunctionTest, round) {
   runRoundTest<float>(testRoundFloatData<float>());
   runRoundTest<double>(testRoundFloatData<double>());
