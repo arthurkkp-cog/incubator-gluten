@@ -111,3 +111,23 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, urlDecode) {
+  const auto urlDecode = [&](std::optional<std::string> value) {
+    return evaluateOnce<std::string>("url_decode(c0)", value);
+  };
+
+  EXPECT_EQ(std::nullopt, urlDecode(std::nullopt));
+  EXPECT_EQ("", urlDecode(""));
+  EXPECT_EQ("http://test", urlDecode("http%3A%2F%2Ftest"));
+  EXPECT_EQ(
+      "http://test?a=b&c=d", urlDecode("http%3A%2F%2Ftest%3Fa%3Db%26c%3Dd"));
+  EXPECT_EQ(
+      "https://spark.apache.org",
+      urlDecode("https%3A%2F%2Fspark.apache.org"));
+  EXPECT_EQ("test", urlDecode("test"));
+  EXPECT_EQ("hello world", urlDecode("hello+world"));
+  EXPECT_EQ("hello world", urlDecode("hello%20world"));
+  EXPECT_EQ("~@:.-*_+ \u2603", urlDecode("%7E%40%3A.-*_%2B+%E2%98%83"));
+  EXPECT_EQ("A", urlDecode("%41"));
+}
