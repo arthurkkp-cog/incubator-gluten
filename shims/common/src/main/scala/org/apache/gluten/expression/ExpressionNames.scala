@@ -246,6 +246,7 @@ object ExpressionNames {
   final val FROM_JSON = "from_json"
   final val JSON_TUPLE = "json_tuple"
   final val JSON_OBJECT_KEYS = "json_object_keys"
+  final val SCHEMA_OF_JSON = "schema_of_json"
 
   // Hash functions
   final val MURMUR3HASH = "murmur3hash"
