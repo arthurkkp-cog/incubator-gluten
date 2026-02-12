@@ -19,6 +19,7 @@
 
 #include "operators/functions/RegistrationAllFunctions.h"
 #include "velox/functions/sparksql/tests/SparkFunctionBaseTest.h"
+#include "velox/type/tz/TimeZoneMap.h"
 
 using namespace facebook::velox::functions::sparksql::test;
 using namespace facebook::velox;
@@ -30,6 +31,13 @@ class SparkFunctionTest : public SparkFunctionBaseTest {
   }
 
  protected:
+  void setQueryTimeZone(const std::string& timeZone) {
+    queryCtx_->testingOverrideConfigUnsafe({
+        {core::QueryConfig::kSessionTimezone, timeZone},
+        {core::QueryConfig::kAdjustTimestampToTimezone, "true"},
+    });
+  }
+
   template <typename T>
   void runRoundTest(const std::vector<std::tuple<T, T>>& data) {
     auto result = evaluate<SimpleVector<T>>("round(c0)", makeRowVector({makeFlatVector<T, 0>(data)}));
@@ -110,4 +118,105 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int32_t>(testRoundWithDecIntegralData<int32_t>());
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
+}
+
+TEST_F(SparkFunctionTest, makeTimestampBasic) {
+  const auto microsType = DECIMAL(16, 6);
+
+  setQueryTimeZone("GMT");
+
+  auto year = makeFlatVector<int32_t>({2021, 2021, 2021, 2021});
+  auto month = makeFlatVector<int32_t>({7, 7, 7, 7});
+  auto day = makeFlatVector<int32_t>({11, 11, 11, 11});
+  auto hour = makeFlatVector<int32_t>({6, 6, 6, 6});
+  auto minute = makeFlatVector<int32_t>({30, 30, 30, 30});
+  auto micros = makeNullableFlatVector<int64_t>(
+      {45678000, 1000000, 60000000, 59999999}, microsType);
+  auto data = makeRowVector({year, month, day, hour, minute, micros});
+
+  auto expected = makeNullableFlatVector<Timestamp>(
+      {parseTimestamp("2021-07-11 06:30:45.678"),
+       parseTimestamp("2021-07-11 06:30:01"),
+       parseTimestamp("2021-07-11 06:31:00"),
+       parseTimestamp("2021-07-11 06:30:59.999999")});
+  auto result = evaluate("make_timestamp(c0, c1, c2, c3, c4, c5)", data);
+  facebook::velox::test::assertEqualVectors(expected, result);
+}
+
+TEST_F(SparkFunctionTest, makeTimestampWithTimezone) {
+  const auto microsType = DECIMAL(16, 6);
+
+  setQueryTimeZone("Asia/Shanghai");
+
+  auto year = makeFlatVector<int32_t>({2021, 2021});
+  auto month = makeFlatVector<int32_t>({7, 7});
+  auto day = makeFlatVector<int32_t>({11, 11});
+  auto hour = makeFlatVector<int32_t>({6, 6});
+  auto minute = makeFlatVector<int32_t>({30, 30});
+  auto micros = makeFlatVector<int64_t>({45678000, 45678000}, microsType);
+  auto timeZone = makeFlatVector<StringView>({"GMT", "CET"});
+  auto data =
+      makeRowVector({year, month, day, hour, minute, micros, timeZone});
+
+  auto expected = makeNullableFlatVector<Timestamp>(
+      {parseTimestamp("2021-07-11 06:30:45.678"),
+       parseTimestamp("2021-07-11 04:30:45.678")});
+  auto result =
+      evaluate("make_timestamp(c0, c1, c2, c3, c4, c5, c6)", data);
+  facebook::velox::test::assertEqualVectors(expected, result);
+}
+
+TEST_F(SparkFunctionTest, makeTimestampInvalidInputs) {
+  const auto microsType = DECIMAL(16, 6);
+
+  setQueryTimeZone("GMT");
+
+  auto year = makeFlatVector<int32_t>({1, 1, 1, 1});
+  auto month = makeFlatVector<int32_t>({0, 13, 1, 1});
+  auto day = makeFlatVector<int32_t>({1, 1, 0, 32});
+  auto hour = makeFlatVector<int32_t>({1, 1, 1, 1});
+  auto minute = makeFlatVector<int32_t>({1, 1, 1, 1});
+  auto micros = makeFlatVector<int64_t>({1, 1, 1, 1}, microsType);
+  auto data = makeRowVector({year, month, day, hour, minute, micros});
+
+  auto expected = makeNullableFlatVector<Timestamp>(
+      {std::nullopt, std::nullopt, std::nullopt, std::nullopt});
+  auto result = evaluate("make_timestamp(c0, c1, c2, c3, c4, c5)", data);
+  facebook::velox::test::assertEqualVectors(expected, result);
+}
+
+TEST_F(SparkFunctionTest, makeTimestampNullInput) {
+  const auto microsType = DECIMAL(16, 6);
+
+  setQueryTimeZone("GMT");
+
+  auto year = makeFlatVector<int32_t>({2021});
+  auto month = makeFlatVector<int32_t>({7});
+  auto day = makeFlatVector<int32_t>({11});
+  auto hour = makeFlatVector<int32_t>({6});
+  auto minute = makeFlatVector<int32_t>({30});
+  auto micros = makeNullableFlatVector<int64_t>({std::nullopt}, microsType);
+  auto data = makeRowVector({year, month, day, hour, minute, micros});
+
+  auto expected = makeNullableFlatVector<Timestamp>({std::nullopt});
+  auto result = evaluate("make_timestamp(c0, c1, c2, c3, c4, c5)", data);
+  facebook::velox::test::assertEqualVectors(expected, result);
+}
+
+TEST_F(SparkFunctionTest, makeTimestampSessionTimezone) {
+  const auto microsType = DECIMAL(16, 6);
+
+  auto year = makeFlatVector<int32_t>({2021});
+  auto month = makeFlatVector<int32_t>({7});
+  auto day = makeFlatVector<int32_t>({11});
+  auto hour = makeFlatVector<int32_t>({6});
+  auto minute = makeFlatVector<int32_t>({30});
+  auto micros = makeFlatVector<int64_t>({45678000}, microsType);
+  auto data = makeRowVector({year, month, day, hour, minute, micros});
+
+  setQueryTimeZone("Asia/Shanghai");
+  auto expected = makeNullableFlatVector<Timestamp>(
+      {parseTimestamp("2021-07-10 22:30:45.678")});
+  auto result = evaluate("make_timestamp(c0, c1, c2, c3, c4, c5)", data);
+  facebook::velox::test::assertEqualVectors(expected, result);
 }
