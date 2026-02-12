@@ -4,6 +4,8 @@
 
 **A Middle Layer for Offloading JVM-based SQL Engines' Execution to Native Engines**
 
+<!-- Test comment for dummy PR -->
+
 [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8452/badge)](https://www.bestpractices.dev/projects/8452)
 
 ## 1. Introduction
