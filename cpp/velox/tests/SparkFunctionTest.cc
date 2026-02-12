@@ -111,3 +111,56 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, formatStringBasic) {
+  auto fmt = makeFlatVector<StringView>({"hello %s", "value %d", "float %f"});
+  auto strArg = makeFlatVector<StringView>({"world", "unused", "unused"});
+  auto intArg = makeFlatVector<int32_t>({0, 42, 0});
+  auto dblArg = makeFlatVector<double>({0.0, 0.0, 3.14});
+
+  auto result = evaluate<SimpleVector<StringView>>("format_string(c0, c1)", makeRowVector({fmt, strArg}));
+  ASSERT_EQ(result->valueAt(0).getString(), "hello world");
+
+  result = evaluate<SimpleVector<StringView>>("format_string(c0, c1)", makeRowVector({fmt, intArg}));
+  ASSERT_EQ(result->valueAt(1).getString(), "value 42");
+
+  result = evaluate<SimpleVector<StringView>>("format_string(c0, c1)", makeRowVector({fmt, dblArg}));
+  ASSERT_EQ(result->valueAt(2).getString(), "float 3.140000");
+}
+
+TEST_F(SparkFunctionTest, formatStringMultipleArgs) {
+  auto fmt = makeFlatVector<StringView>({"%d %s %f"});
+  auto intArg = makeFlatVector<int32_t>({42});
+  auto strArg = makeFlatVector<StringView>({"hello"});
+  auto dblArg = makeFlatVector<double>({1.5});
+
+  auto result = evaluate<SimpleVector<StringView>>(
+      "format_string(c0, c1, c2, c3)", makeRowVector({fmt, intArg, strArg, dblArg}));
+  ASSERT_EQ(result->valueAt(0).getString(), "42 hello 1.500000");
+}
+
+TEST_F(SparkFunctionTest, formatStringPercentEscape) {
+  auto fmt = makeFlatVector<StringView>({"100%%"});
+  auto result = evaluate<SimpleVector<StringView>>("format_string(c0)", makeRowVector({fmt}));
+  ASSERT_EQ(result->valueAt(0).getString(), "100%");
+}
+
+TEST_F(SparkFunctionTest, formatStringNoArgs) {
+  auto fmt = makeFlatVector<StringView>({"hello world"});
+  auto result = evaluate<SimpleVector<StringView>>("format_string(c0)", makeRowVector({fmt}));
+  ASSERT_EQ(result->valueAt(0).getString(), "hello world");
+}
+
+TEST_F(SparkFunctionTest, formatStringWithBigint) {
+  auto fmt = makeFlatVector<StringView>({"%d"});
+  auto bigintArg = makeFlatVector<int64_t>({1234567890123LL});
+  auto result = evaluate<SimpleVector<StringView>>("format_string(c0, c1)", makeRowVector({fmt, bigintArg}));
+  ASSERT_EQ(result->valueAt(0).getString(), "1234567890123");
+}
+
+TEST_F(SparkFunctionTest, formatStringWithPadding) {
+  auto fmt = makeFlatVector<StringView>({"%04d"});
+  auto intArg = makeFlatVector<int32_t>({42});
+  auto result = evaluate<SimpleVector<StringView>>("format_string(c0, c1)", makeRowVector({fmt, intArg}));
+  ASSERT_EQ(result->valueAt(0).getString(), "0042");
+}

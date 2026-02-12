@@ -17,6 +17,7 @@
 #include "operators/functions/RegistrationAllFunctions.h"
 
 #include "operators/functions/Arithmetic.h"
+#include "operators/functions/FormatString.h"
 #include "operators/functions/RowConstructorWithNull.h"
 #include "operators/functions/RowFunctionWithNull.h"
 #include "velox/expression/SpecialFormRegistry.h"
@@ -77,6 +78,9 @@ void registerFunctionOverwrite() {
       std::make_unique<RowConstructorWithNullCallToSpecialForm>(kRowConstructorWithAllNull));
 
   velox::functions::registerPrestoVectorFunctions();
+
+  velox::exec::registerStatefulVectorFunction(
+      "format_string", formatStringSignatures(), makeFormatString);
 }
 
 } // namespace
