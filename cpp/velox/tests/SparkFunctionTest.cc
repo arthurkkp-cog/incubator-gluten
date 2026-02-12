@@ -111,3 +111,116 @@ TEST_F(SparkFunctionTest, roundWithDecimal) {
   runRoundWithDecimalTest<int16_t>(testRoundWithDecIntegralData<int16_t>());
   runRoundWithDecimalTest<int8_t>(testRoundWithDecIntegralData<int8_t>());
 }
+
+TEST_F(SparkFunctionTest, parseUrl) {
+  const auto parseUrlExpr = [&](const std::vector<std::optional<StringView>>& urls,
+                                const std::vector<std::optional<StringView>>& parts) {
+    return evaluate(
+        "parse_url(c0, c1)",
+        makeRowVector({makeNullableFlatVector<StringView>(urls), makeNullableFlatVector<StringView>(parts)}));
+  };
+
+  auto result = parseUrlExpr(
+      {StringView("http://example.com/path?q=1&r=2#ref"),
+       StringView("http://example.com/path?q=1&r=2#ref"),
+       StringView("http://example.com/path?q=1&r=2#ref"),
+       StringView("http://example.com/path?q=1&r=2#ref"),
+       StringView("http://example.com/path?q=1&r=2#ref"),
+       StringView("http://example.com/path?q=1&r=2#ref"),
+       StringView("http://example.com/path?q=1&r=2#ref"),
+       StringView("http://user:pass@example.com/path?q=1&r=2#ref")},
+      {StringView("HOST"),
+       StringView("PATH"),
+       StringView("QUERY"),
+       StringView("REF"),
+       StringView("PROTOCOL"),
+       StringView("FILE"),
+       StringView("AUTHORITY"),
+       StringView("USERINFO")});
+
+  auto simpleResult = result->as<SimpleVector<StringView>>();
+  ASSERT_EQ(simpleResult->valueAt(0), StringView("example.com"));
+  ASSERT_EQ(simpleResult->valueAt(1), StringView("/path"));
+  ASSERT_EQ(simpleResult->valueAt(2), StringView("q=1&r=2"));
+  ASSERT_EQ(simpleResult->valueAt(3), StringView("ref"));
+  ASSERT_EQ(simpleResult->valueAt(4), StringView("http"));
+  ASSERT_EQ(simpleResult->valueAt(5), StringView("/path?q=1&r=2"));
+  ASSERT_EQ(simpleResult->valueAt(6), StringView("example.com"));
+  ASSERT_EQ(simpleResult->valueAt(7), StringView("user:pass"));
+}
+
+TEST_F(SparkFunctionTest, parseUrlNullCases) {
+  const auto parseUrlExpr = [&](const std::vector<std::optional<StringView>>& urls,
+                                const std::vector<std::optional<StringView>>& parts) {
+    return evaluate(
+        "parse_url(c0, c1)",
+        makeRowVector({makeNullableFlatVector<StringView>(urls), makeNullableFlatVector<StringView>(parts)}));
+  };
+
+  auto result = parseUrlExpr(
+      {StringView("http://example.com/path"),
+       StringView("http://example.com/path"),
+       StringView("/path/to/file"),
+       StringView("http://example.com/path"),
+       std::nullopt},
+      {StringView("QUERY"),
+       StringView("REF"),
+       StringView("HOST"),
+       StringView("INVALID_PART"),
+       StringView("HOST")});
+
+  auto simpleResult = result->as<SimpleVector<StringView>>();
+  ASSERT_TRUE(simpleResult->isNullAt(0));
+  ASSERT_TRUE(simpleResult->isNullAt(1));
+  ASSERT_TRUE(simpleResult->isNullAt(2));
+  ASSERT_TRUE(simpleResult->isNullAt(3));
+  ASSERT_TRUE(simpleResult->isNullAt(4));
+}
+
+TEST_F(SparkFunctionTest, parseUrlWithKey) {
+  const auto parseUrlWithKeyExpr =
+      [&](const std::vector<std::optional<StringView>>& urls,
+          const std::vector<std::optional<StringView>>& parts,
+          const std::vector<std::optional<StringView>>& keys) {
+        return evaluate(
+            "parse_url(c0, c1, c2)",
+            makeRowVector(
+                {makeNullableFlatVector<StringView>(urls),
+                 makeNullableFlatVector<StringView>(parts),
+                 makeNullableFlatVector<StringView>(keys)}));
+      };
+
+  auto result = parseUrlWithKeyExpr(
+      {StringView("http://example.com/path?q=1&r=2#ref"),
+       StringView("http://example.com/path?q=1&r=2#ref"),
+       StringView("http://example.com/path?q=1&r=2#ref"),
+       StringView("http://example.com/path?q=1&r=2#ref")},
+      {StringView("QUERY"), StringView("QUERY"), StringView("QUERY"), StringView("HOST")},
+      {StringView("q"), StringView("r"), StringView("nonexistent"), StringView("ignored")});
+
+  auto simpleResult = result->as<SimpleVector<StringView>>();
+  ASSERT_EQ(simpleResult->valueAt(0), StringView("1"));
+  ASSERT_EQ(simpleResult->valueAt(1), StringView("2"));
+  ASSERT_TRUE(simpleResult->isNullAt(2));
+  ASSERT_TRUE(simpleResult->isNullAt(3));
+}
+
+TEST_F(SparkFunctionTest, parseUrlWithPort) {
+  const auto parseUrlExpr = [&](const std::vector<std::optional<StringView>>& urls,
+                                const std::vector<std::optional<StringView>>& parts) {
+    return evaluate(
+        "parse_url(c0, c1)",
+        makeRowVector({makeNullableFlatVector<StringView>(urls), makeNullableFlatVector<StringView>(parts)}));
+  };
+
+  auto result = parseUrlExpr(
+      {StringView("http://example.com:8080/path"),
+       StringView("http://example.com:8080/path"),
+       StringView("http://user@example.com:8080/path")},
+      {StringView("HOST"), StringView("AUTHORITY"), StringView("USERINFO")});
+
+  auto simpleResult = result->as<SimpleVector<StringView>>();
+  ASSERT_EQ(simpleResult->valueAt(0), StringView("example.com"));
+  ASSERT_EQ(simpleResult->valueAt(1), StringView("example.com:8080"));
+  ASSERT_EQ(simpleResult->valueAt(2), StringView("user"));
+}
